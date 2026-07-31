@@ -2291,6 +2291,77 @@ function gLog(msg, cls){
 function cfgGet(k, d){ try{ return localStorage.getItem(k) ?? d }catch(e){ return d } }
 function cfgSet(k, v){ try{ localStorage.setItem(k, v) }catch(e){} }
 
+
+/* ---------- 0. The easy way: paste the sheet link ----------
+   Uses Google's gviz CSV endpoint. Works the moment the sheet is set to
+   "Anyone with the link can view". No Cloud project, no service account,
+   no deployment. Works from a local file too, because Google sends CORS
+   headers on this endpoint.                                              */
+const WANT_TABS = [
+  {name:"FDE Leads",                 header:0, need:true },
+  {name:"0-5 YOE Tech attendees",    header:1, need:false},
+  {name:"Detail5",                   header:2, need:false},
+];
+function sheetIdFrom(url){
+  const m = S(url).match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  return m ? m[1] : (/^[a-zA-Z0-9-_]{30,}$/.test(S(url).trim()) ? S(url).trim() : "");
+}
+function gvizUrl(id, tab){
+  return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`;
+}
+function csvToObjects(text, headerRow){
+  const wb = XLSX.read(text, {type:"string"});
+  const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, defval:""});
+  if(rows.length <= headerRow) return [];
+  const head = rows[headerRow].map(x=>String(x).trim());
+  return rows.slice(headerRow+1).map(r=>{
+    const o={}; head.forEach((h,i)=>{ if(h) o[h]=r[i] ?? "" }); return o;
+  });
+}
+async function pullBySheetLink(){
+  if(GBUSY) return; GBUSY = true;
+  const raw = ($("gLink")?.value || "").trim();
+  const id = sheetIdFrom(raw);
+  if(!id){ gLog("That does not look like a Google Sheets link. Copy the whole address from the browser bar.","em"); GBUSY=false; return }
+  cfgSet("fbi:link", raw);
+  gLog(`Sheet ID ${id}`);
+  const out = {};
+  try{
+    for(const t of WANT_TABS){
+      const u = gvizUrl(id, t.name);
+      gLog(`Reading tab "${t.name}"…`);
+      let r;
+      try{ r = await fetch(u, {cache:"no-store"}) }
+      catch(e){
+        gLog(`Could not reach Google for "${t.name}": ${e.message}`,"em");
+        gLog("That is almost always the sharing setting. Open the sheet, press Share, and set General access to \"Anyone with the link\" as Viewer.","em");
+        GBUSY=false; return;
+      }
+      const txt = await r.text();
+      if(!r.ok || /^\s*</.test(txt)){
+        gLog(`Tab "${t.name}" came back as a login page, not data (HTTP ${r.status}).`,"em");
+        if(t.need){
+          gLog("The sheet is still private. Share → General access → Anyone with the link → Viewer. Then press this button again.","em");
+          GBUSY=false; return;
+        }
+        gLog(`Skipping "${t.name}" and carrying on.`,"em");
+        continue;
+      }
+      const rows = csvToObjects(txt, t.header);
+      out[t.name] = rows;
+      gLog(`  ${t.name}: ${rows.length} rows`, rows.length?"b":"em");
+    }
+    if(!(out["FDE Leads"]||[]).length){
+      gLog("Read the sheet but the 'FDE Leads' tab was empty. Check the tab name is exactly that.","em");
+      GBUSY=false; return;
+    }
+    await ingestFromTabs(out, "Google Sheet link");
+    $("gWhen").textContent = "last pulled " + new Date().toLocaleTimeString();
+  }catch(e){
+    gLog("Failed: " + e.message, "em");
+  }finally{ GBUSY = false }
+}
+
 /* ---------- A. service account through your own Vercel function ---------- */
 async function pullViaApi(){
   if(GBUSY) return; GBUSY = true;
@@ -2451,11 +2522,30 @@ function gAuto(){
 function googlePanel(){
   const base=cfgGet("fbi:apiBase",""), key=cfgGet("fbi:apiKey",""),
         cid=cfgGet("fbi:clientId",""), sid=cfgGet("fbi:sheetId",SHEET_ID_DEFAULT);
+  const lnk=cfgGet("fbi:link","https://docs.google.com/spreadsheets/d/"+SHEET_ID_DEFAULT+"/edit");
   return `
+  <div class="card" style="margin-bottom:14px;border-left:3px solid var(--grn)">
+    <h3>13.1 · Paste your sheet link — start here</h3>
+    <div class="sub"><b>Two minutes, nothing to install.</b> Set the sheet to "anyone with the link can view",
+    paste the address, press the button. Works from this file on your laptop as well as on Vercel.</div>
+    <div class="ctl">
+      <label class="f">Sheet link</label>
+      <input type="url" id="gLink" placeholder="https://docs.google.com/spreadsheets/d/…" value="${esc(lnk)}" style="min-width:470px">
+      <button class="pri" onclick="pullBySheetLink()">Connect the sheet</button>
+    </div>
+    <div style="font-size:12.5px;color:var(--body);line-height:1.9;margin-top:4px">
+      <b>1.</b> Open the sheet → <b>Share</b> → under <b>General access</b> pick <b>Anyone with the link</b> → role <b>Viewer</b> → Done.<br>
+      <b>2.</b> Copy the address out of the browser bar and paste it above.<br>
+      <b>3.</b> Press <b>Connect the sheet</b>.<br>
+      <span style="color:var(--amb)">Anyone who gets that link can read the sheet. If the data is sensitive, use option B below instead.</span>
+    </div>
+    <div class="log" id="gLog"></div>
+  </div>
+
   <div class="card" style="margin-bottom:14px;border-left:3px solid var(--cy)">
-    <h3>13.1 · Read the Google Sheet directly</h3>
-    <div class="sub">Two ways in. <b>Use the first one day to day</b> — nobody signs in, and it keeps working when
-    you are not at your desk. The second is for a quick ad-hoc pull as yourself.</div>
+    <h3>13.2 · Keep the sheet private — service account through Vercel</h3>
+    <div class="sub">Fifteen minutes once, then it runs itself. The sheet stays private and you share it with a
+    robot address instead. <b>This is what you want long term.</b></div>
 
     <div class="fl" style="margin-top:0">A · Service account, through your own Vercel function</div>
     <div style="font-size:12.5px;color:var(--mute);line-height:1.7;margin:6px 0 10px">
@@ -2496,11 +2586,11 @@ function googlePanel(){
         <option value="30">Every 30 min</option><option value="60">Hourly</option></select>
       <span class="mono mute" style="font-size:11px" id="gWhen">not pulled yet</span>
     </div>
-    <div class="log" id="gLog"></div>
+    <div class="log" id="gLog2"></div>
   </div>
 
   <div class="card" style="margin-bottom:14px">
-    <h3>13.2 · Setting it up, once</h3>
+    <h3>13.3 · Setting up the service account, once</h3>
     <div class="sub">Fifteen minutes, and then you never touch it again.</div>
     <div style="font-size:12.5px;color:var(--body);line-height:1.9">
       <b>1.</b> Google Cloud Console → make a project (or reuse one) → <b>enable the Google Sheets API</b>.<br>
@@ -2520,7 +2610,7 @@ function googlePanel(){
   </div>
 
   <div class="card" style="margin-bottom:14px">
-    <h3>13.3 · If you want the sign-in button as well</h3>
+    <h3>13.4 · If you want the sign-in button as well</h3>
     <div class="sub">Optional. Only needed if different people should see different sheets.</div>
     <div style="font-size:12.5px;color:var(--body);line-height:1.9">
       <b>1.</b> Google Cloud Console → APIs &amp; Services → <b>OAuth consent screen</b>. Internal if everyone is on the
@@ -4063,11 +4153,12 @@ function pageUpload(){
 /* ============ 13 DATA SOURCES ============ */
 function pageData(){
   return `<section><div class="eyebrow">Section 13 · Live data</div><h1 class="pg">Connect live data</h1>
-   <p class="lede">Read the Google Sheet straight into this tool. Set it up once and it stays connected — plus the
-   straight answer on BigQuery and Salesforce underneath.</p>
+   <p class="lede">Three ways to read the Google Sheet into this tool, easiest first.
+   <b>Start with 13.1</b> — it takes two minutes and needs nothing installed. Move to 13.2 when you want the sheet to
+   stay private. BigQuery and Salesforce are answered underneath.</p>
 
    ${googlePanel()}
-   <div class="card" style="margin-bottom:14px"><h3>13.4 · Or just paste a published link</h3>
+   <div class="card" style="margin-bottom:14px"><h3>13.5 · Or a published CSV link</h3>
    <div class="sub">Point this at any web link that gives back a CSV or JSON file. The tool pulls it in, re-scores everything,
    and can keep pulling it on a timer. This is the easy way to get live BigQuery data in here.</div>
    <div class="ctl">
@@ -4087,7 +4178,7 @@ function pageData(){
    <div class="log" id="liveLog"></div></div>
 
    <div class="grid" style="grid-template-columns:1fr 1fr">
-   <div class="card"><h3>13.5 · BigQuery — what is actually possible</h3>
+   <div class="card"><h3>13.6 · BigQuery — what is actually possible</h3>
    <div class="sub">A single file like this cannot talk to BigQuery directly. There is no safe way to do it — the login needs
    a redirect, or a key file, and a key pasted in here would be readable by anyone you send the file to. Browsers also block
    the request. So you always need something sitting in the middle. Three ways, easiest first.</div>
@@ -4106,7 +4197,7 @@ function pageData(){
      About forty lines of code. This is what you want once more than a few people use this.
    </div></div>
 
-   <div class="card"><h3>13.6 · Salesforce — same answer</h3>
+   <div class="card"><h3>13.7 · Salesforce — same answer</h3>
    <div class="sub">Also not possible directly, for the same reasons plus one more: Salesforce needs to know the exact web
    address the request is coming from, and a file opened on your laptop does not have one.</div>
    <div style="font-size:12.5px;line-height:1.8;color:var(--body)">
@@ -4120,7 +4211,7 @@ function pageData(){
      who went quiet and one who was simply handed to someone else.
    </div></div></div>
 
-   <div class="card" style="margin-top:14px"><h3>13.7 · Two other things</h3>
+   <div class="card" style="margin-top:14px"><h3>13.8 · Two other things</h3>
    <div style="font-size:12.5px;line-height:1.8;color:var(--body)">
      <b style="color:var(--ink)">Your Claude account is already connected to HubSpot, Google Drive and Slack.</b> Those work in a Claude
      chat, not inside this file. So the quickest way to fresher data today is to ask Claude to pull from HubSpot or Drive, run the

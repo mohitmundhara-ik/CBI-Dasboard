@@ -116,7 +116,7 @@ section{margin-bottom:8px}
 
 /* ---------- tables ---------- */
 .tw{overflow:auto;border:1px solid var(--s200);border-radius:var(--r);background:var(--s0);
-  box-shadow:var(--shadow);max-height:660px}
+  box-shadow:var(--shadow);max-height:660px;max-width:100%;min-width:0;position:relative;z-index:0}
 table{border-collapse:collapse;width:100%;font-size:12.5px}
 th{position:sticky;top:0;background:var(--s100);z-index:5;text-align:left;padding:9px 11px;
   font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
@@ -165,7 +165,8 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 
 /* ---------- callout ---------- */
 .callout{border:1px solid var(--s200);border-left:3px solid var(--red);border-radius:var(--r);
-  padding:15px 17px;background:var(--s0);box-shadow:var(--shadow);margin-bottom:16px}
+  padding:15px 17px;background:var(--s0);box-shadow:var(--shadow);margin-bottom:16px;
+  max-width:100%;min-width:0;overflow-wrap:anywhere;position:relative;z-index:1}
 .callout.ok{border-left-color:var(--grn)}
 .callout.info{border-left-color:var(--cy)}
 .callout h4{font-size:15px;font-weight:700;margin-bottom:5px;letter-spacing:-.015em}
@@ -173,25 +174,33 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .callout p b{color:var(--ink);font-weight:700}
 
 /* ---------- drawer ---------- */
-.scrim{position:fixed;inset:0;background:rgba(11,37,69,.4);backdrop-filter:blur(3px);
+.scrim{position:fixed;inset:0;background:rgba(11,37,69,.45);backdrop-filter:blur(4px);
   z-index:90;display:none}
 .scrim.on{display:block}
 .drawer{position:fixed;top:0;right:0;bottom:0;width:min(1020px,97vw);background:var(--s50);
   z-index:95;transform:translateX(101%);transition:.24s cubic-bezier(.4,0,.2,1);
-  display:flex;flex-direction:column;box-shadow:-8px 0 40px rgba(11,37,69,.18)}
+  display:flex;flex-direction:column;box-shadow:-8px 0 40px rgba(11,37,69,.18);
+  overflow:hidden;contain:layout paint}
 .drawer.on{transform:translateX(0)}
 .dhead{background:var(--s0);border-bottom:1px solid var(--s200);padding:13px 22px;
-  display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-shrink:0}
+  display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-shrink:0;
+  min-width:0;position:relative;z-index:2}
+.dhead>div:first-child{min-width:0;overflow:hidden}
+.dhead h2{overflow-wrap:anywhere}
 .dhead h2{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-top:2px}
 .dhead .ctx{font-size:11.5px;color:var(--mute);margin-top:3px}
-.dbody{overflow-y:auto;padding:20px 22px 60px;flex:1}
-.vb{background:var(--s0);border:1px solid var(--s200);border-left:2px solid var(--cy);
+.dbody{overflow-y:auto;overflow-x:hidden;padding:20px 22px 60px;flex:1 1 auto;
+  min-width:0;min-height:0;width:100%}
+.dbody>*{max-width:100%}
+.vb{max-width:100%;overflow-wrap:anywhere;background:var(--s0);border:1px solid var(--s200);border-left:2px solid var(--cy);
   border-radius:8px;padding:12px 14px;margin:6px 0 15px;font-size:12.5px;line-height:1.65;
   white-space:pre-wrap;color:var(--body);max-height:330px;overflow:auto}
 .vb.empty{color:var(--faint);font-style:italic;border-left-color:var(--s300)}
 .fl{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;
   color:var(--cy-d);margin-top:17px;font-weight:600}
-.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(136px,1fr));gap:9px;margin:13px 0 6px}
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(136px,1fr));gap:9px;margin:13px 0 6px;max-width:100%}
+.meta div{min-width:0;overflow:hidden}
+.meta .v{overflow-wrap:anywhere}
 .meta div{background:var(--s0);border:1px solid var(--s200);border-radius:8px;padding:9px 11px}
 .meta .k{font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.12em;color:var(--mute);
   text-transform:uppercase;margin-bottom:3px}
@@ -258,7 +267,7 @@ table.mini td:first-child{color:var(--mute);width:150px}
 .xpanel .hbar .vn{width:82px;font-size:10.5px}
 .hbar.xon{background:var(--cy-l);font-weight:600}
 .hbar.xon .nm{color:var(--navy)}
-.dfc{background:var(--s0);border:1px solid var(--s200);border-left:3px solid var(--red);
+.dfc{max-width:100%;min-width:0;background:var(--s0);border:1px solid var(--s200);border-left:3px solid var(--red);
   border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden}
 .dfhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;
   background:var(--s50);border-bottom:1px solid var(--s100);font-size:12.5px}
@@ -272,7 +281,7 @@ table.mini td:first-child{color:var(--mute);width:150px}
 .dfqh{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
   color:var(--mute);margin-bottom:6px}
 .dfqh b{color:var(--red)}
-.dfqt{font-size:13px;line-height:1.72;color:var(--body);background:var(--s50);border-radius:7px;
+.dfqt{overflow-wrap:anywhere;font-size:13px;line-height:1.72;color:var(--body);background:var(--s50);border-radius:7px;
   padding:11px 13px;border-left:2px solid var(--s300)}
 .dfq.empty .dfqt{color:var(--faint);font-style:italic;font-size:12px}
 mark{background:#FFE79B;color:var(--ink);font-weight:700;padding:1px 3px;border-radius:3px}
@@ -2278,6 +2287,52 @@ async function pullViaApi(){
   }finally{ GBUSY = false }
 }
 
+/* ---------- diagnostics: say exactly what is wrong ---------- */
+async function gDiagnose(){
+  const base=($("gApiBase")?.value||"").trim().replace(/\/+$/,"");
+  const key =($("gApiKey")?.value||"").trim();
+  const url =(base||"")+"/api/sheet";
+  gLog("--- running the checks ---");
+  if(!base && location.protocol==="file:"){
+    gLog("1. You have this open as a file on your machine and left the Vercel URL blank. A local file cannot call a relative path. Paste https://fde-dashboard-iota.vercel.app in the box above.","em");
+    return;
+  }
+  gLog(base?`1. Will call ${url}`:`1. Will call ${url} on this same site.`);
+  if(!key) gLog("2. No API key entered. If you set API_KEY in Vercel, this will come back 401.","em");
+  else gLog("2. API key entered, "+key.length+" characters.");
+  let r, txt;
+  try{
+    r = await fetch(url, {headers: key?{"x-api-key":key}:{}});
+  }catch(e){
+    gLog("3. The request never reached the server: "+e.message,"em");
+    gLog("   Most likely one of: the URL is wrong, the site has not been redeployed since you added api/sheet.js, or you are offline.","em");
+    gLog("   Try opening "+url+"?key=YOUR_KEY straight in a browser tab. If that 404s, the function is not deployed.","em");
+    return;
+  }
+  gLog("3. Server answered with HTTP "+r.status+".");
+  try{ txt = await r.text() }catch(e){ txt="" }
+  let j=null; try{ j=JSON.parse(txt) }catch(e){}
+  if(r.status===404){
+    gLog("   404 means Vercel has no function at /api/sheet. Check the file is at exactly api/sheet.js in the repo root, then redeploy.","em"); return;
+  }
+  if(r.status===401){
+    gLog("   401 means the key did not match. Compare what you typed against API_KEY in Vercel, character for character.","em"); return;
+  }
+  if(r.status===500 && j?.error){
+    gLog("   500: "+j.error,"em");
+    if(/SA_EMAIL|SA_KEY/.test(j.error)) gLog("   The environment variables are missing. Add them in Vercel, then REDEPLOY - Vercel only picks them up on a new build.","em");
+    if(/PEM|DECODER/.test(j.error))     gLog("   The private key got mangled. Paste it again from the JSON, keeping the \\n sequences exactly as they are.","em");
+    return;
+  }
+  if(!r.ok || j?.error){
+    gLog("   "+(j?.error||txt.slice(0,200)),"em");
+    if(/permission|not found/i.test(j?.error||"")) gLog("   Share the sheet with the service account address as a Viewer. That is the step that grants access - nothing else does.","em");
+    return;
+  }
+  gLog("4. It worked. "+Object.entries(j.counts||{}).map(([k,v])=>`${k}: ${v} rows`).join(" · "),"b");
+  gLog("   Press 'Pull the sheet now' to load it in.","b");
+}
+
 /* ---------- B. sign in as yourself ---------- */
 function gLoadScript(){
   return new Promise((res, rej)=>{
@@ -2383,9 +2438,12 @@ function googlePanel(){
       <label class="f">API key</label>
       <input type="text" id="gApiKey" placeholder="the API_KEY you set in Vercel" value="${esc(key)}" style="min-width:230px">
       <button class="pri" onclick="pullViaApi()">Pull the sheet now</button>
+      <button onclick="gDiagnose()">Test the connection</button>
     </div>
-    <div class="mute" style="font-size:11.5px;margin-bottom:16px">Leave the URL blank if you are already viewing this
-    on Vercel — it will call its own <span class="mono">/api/sheet</span>.</div>
+    <div class="mute" style="font-size:11.5px;margin-bottom:16px">Leave the URL blank only if you are viewing this
+    <b>on Vercel</b>. If you opened the file from your machine you must paste the full Vercel address, or the browser
+    has nothing to call. <b>Press "Test the connection" first</b> — it tells you exactly which step is broken instead of
+    just saying it failed.</div>
 
     <div class="fl">B · Sign in as yourself</div>
     <div style="font-size:12.5px;color:var(--mute);line-height:1.7;margin:6px 0 10px">

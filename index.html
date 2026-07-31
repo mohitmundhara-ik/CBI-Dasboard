@@ -94,8 +94,8 @@ label.f{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.13em
 .ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
 
 /* ---------- cards ---------- */
-.card{background:linear-gradient(180deg,#fff,#FCFDFE);border:1px solid var(--s200);
-  border-radius:var(--r);box-shadow:var(--shadow);padding:17px 18px}
+.card{display:block;width:auto;background:linear-gradient(180deg,#fff,#FCFDFE);
+  border:1px solid var(--s200);border-radius:var(--r);box-shadow:var(--shadow);padding:17px 18px}
 .card h3{font-size:13.5px;font-weight:700;letter-spacing:-.01em}
 .card .sub{font-size:11px;color:var(--faint);margin-top:3px;margin-bottom:14px;line-height:1.55}
 .card .sub b{color:var(--body);font-weight:600}
@@ -127,19 +127,19 @@ section{margin-bottom:8px}
 .kpi.click:hover .arrow{color:var(--cy)}
 .kpi.r{border-top:2px solid var(--red)} .kpi.w{border-top:2px solid var(--amb)}
 .kpi.g{border-top:2px solid var(--grn)} .kpi.a{border-top:2px solid var(--cy)}
-.info{display:inline-flex;width:13px;height:13px;border-radius:50%;border:1px solid var(--s300);
+.infodot{display:inline-flex;width:13px;height:13px;border-radius:50%;border:1px solid var(--s300);
   color:var(--faint);font-size:9px;align-items:center;justify-content:center;cursor:help;
   position:relative;font-weight:700;flex-shrink:0;font-family:Inter}
-.info:hover{border-color:var(--navy);color:var(--navy)}
-.info .tip{visibility:hidden;opacity:0;transition:.14s;position:absolute;left:50%;
+.infodot:hover{border-color:var(--navy);color:var(--navy)}
+.infodot .tip{visibility:hidden;opacity:0;transition:.14s;position:absolute;left:50%;
   transform:translateX(-50%);bottom:calc(100% + 7px);z-index:80;width:280px;padding:10px 12px;
   border-radius:8px;background:var(--navy);color:#fff;font-size:11px;line-height:1.55;
   font-weight:400;text-transform:none;letter-spacing:0;box-shadow:var(--shadow-m);pointer-events:none;text-align:left}
-.info:hover .tip{visibility:visible;opacity:1}
-.info .tip b{color:var(--cy);font-weight:600}
+.infodot:hover .tip{visibility:visible;opacity:1}
+.infodot .tip b{color:var(--cy);font-weight:600}
 
 /* ---------- tables ---------- */
-.tw{overflow:auto;border:1px solid var(--s200);border-radius:var(--r);background:var(--s0);
+.tw{display:block;width:auto;overflow:auto;border:1px solid var(--s200);border-radius:var(--r);background:var(--s0);
   box-shadow:var(--shadow);max-height:660px;max-width:100%;min-width:0;position:relative;z-index:0}
 table{border-collapse:collapse;width:100%;font-size:12.5px}
 th{position:sticky;top:0;background:var(--s100);z-index:5;text-align:left;padding:9px 11px;
@@ -188,9 +188,12 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
   color:var(--faint);flex-shrink:0;font-variant-numeric:tabular-nums}
 
 /* ---------- callout ---------- */
-.callout{border:1px solid var(--s200);border-left:3px solid var(--red);border-radius:var(--r);
-  padding:15px 17px;background:var(--s0);box-shadow:var(--shadow);margin-bottom:16px;
-  max-width:100%;min-width:0;overflow-wrap:break-word;position:relative;z-index:1}
+.callout{display:block!important;width:auto;height:auto;border:1px solid var(--s200);
+  border-left:3px solid var(--red);border-radius:var(--r);padding:15px 17px;background:var(--s0);
+  box-shadow:var(--shadow);margin-bottom:16px;max-width:100%;overflow-wrap:break-word;
+  position:relative;z-index:1;align-items:initial;justify-content:initial}
+.callout>*{display:block;width:auto}
+.callout h4,.callout p{display:block;width:auto}
 .callout.ok{border-left-color:var(--grn)}
 .callout.info{border-left-color:var(--cy)}
 .callout h4{font-size:15px;font-weight:700;margin-bottom:5px;letter-spacing:-.015em}
@@ -785,7 +788,7 @@ function kpi(id,val,den,tone,drillFn){
   return `<div${click}>
     <div class="top"><span class="id">${id}</span>
       <span style="display:flex;gap:6px;align-items:center">
-      <span class="info">i<span class="tip"><b>${esc(d[0])}</b><br>${esc(d[1])}<br><br>Comes from: ${d[2]==="universe"?"the Live DB - everyone who signed up":d[2]==="non-iql"?"the 0-5 YOE attendees sheet":"the call file we read"}</span></span>
+      <span class="infodot">i<span class="tip"><b>${esc(d[0])}</b><br>${esc(d[1])}<br><br>Comes from: ${d[2]==="universe"?"the Live DB - everyone who signed up":d[2]==="non-iql"?"the 0-5 YOE attendees sheet":"the call file we read"}</span></span>
       ${drillFn?'<span class="arrow">↗</span>':''}</span></div>
     <div class="lab">${esc(d[0])}</div>
     <div class="val">${val}</div>
@@ -1902,7 +1905,7 @@ function pageOrg(){
      ${O.track_defs.map((t,i)=>{const n=O.track_totals[t.code]||0;
        return `<div class="kpi ${n===0?"r":i===0?"a":""}">
          <div class="top"><span class="id">T${i+1}</span>
-           <span class="info">i<span class="tip"><b>${esc(t.name)}</b><br>${esc(t.note)}<br><br>Comes from: the job ads, one track per ad.</span></span></div>
+           <span class="infodot">i<span class="tip"><b>${esc(t.name)}</b><br>${esc(t.note)}<br><br>Comes from: the job ads, one track per ad.</span></span></div>
          <div class="lab">${esc(t.name)}</div><div class="val">${n}</div>
          <div class="den">${n===0?"does not exist in India yet":pct(n,M.total)+" of all ads"}</div></div>`}).join("")}
    </div>`;
@@ -2833,7 +2836,7 @@ function pageLead(){
 
   let h=`<section><div class="eyebrow">Section 1 · The 60-second read</div>
    <h1 class="pg">Summary</h1>
-   <p class="lede">Every box has a number code, and hovering the <span class="info" style="vertical-align:-1px">i<span class="tip">Hover any <b>i</b> to see exactly what the number counts and what it is out of. Click any box, bar or step to see the leads behind it.</span></span> tells you exactly what it counts. Click anything to see the leads behind it. Every percentage shows what it is out of, so nothing is guesswork.</p>
+   <p class="lede">Every box has a number code, and hovering the <span class="infodot" style="vertical-align:-1px">i<span class="tip">Hover any <b>i</b> to see exactly what the number counts and what it is out of. Click any box, bar or step to see the leads behind it.</span></span> tells you exactly what it counts. Click anything to see the leads behind it. Every percentage shows what it is out of, so nothing is guesswork.</p>
    <div class="callout ${bad?'':'ok'}">
      <h4>${bad?"The problem is how we are selling, not the market.":"Calls are holding up well."}</h4>
      <p>${bad?`The average call scores <b>${acq} out of 100</b> across ${sub.length} real conversations.

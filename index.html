@@ -2282,8 +2282,14 @@ function cvOpen(i){
       a file opened off the desktop.                                                        */
 
 const SHEET_ID_DEFAULT = "1XBqBzpnpemBJVHAt74AQq-1aSHn5A3808YRr-Q0JOQw";
+const SA_EMAIL_DEFAULT = "fde-data@fde-504106.iam.gserviceaccount.com";
+const VERCEL_DEFAULT   = "https://fde-dashboard-iota.vercel.app";
 let GTOKEN = null, GCLIENT = null, GBUSY = false;
 
+function gCopy(txt, what){
+  try{ navigator.clipboard.writeText(txt); gLog((what||"Copied")+" copied to the clipboard.","b") }
+  catch(e){ gLog("Could not copy automatically. Select the text and copy it by hand.","em") }
+}
 function gLog(msg, cls){
   const el=$("gLog"); if(!el) return;
   el.innerHTML=`<div>${new Date().toLocaleTimeString()} — ${cls?`<${cls}>${msg}</${cls}>`:msg}</div>`+el.innerHTML;
@@ -2393,7 +2399,7 @@ async function gDiagnose(){
   const key =($("gApiKey")?.value||"").trim();
   const url =(base||"")+"/api/sheet";
   gLog("--- running the checks ---");
-  if(!base && location.protocol==="file:"){
+  if(!base && typeof location !== "undefined" && location.protocol==="file:"){
     gLog("1. You have this open as a file on your machine and left the Vercel URL blank. A local file cannot call a relative path. Paste https://fde-dashboard-iota.vercel.app in the box above.","em");
     return;
   }
@@ -2520,108 +2526,123 @@ function gAuto(){
 
 /* ---------- the panel ---------- */
 function googlePanel(){
-  const base=cfgGet("fbi:apiBase",""), key=cfgGet("fbi:apiKey",""),
-        cid=cfgGet("fbi:clientId",""), sid=cfgGet("fbi:sheetId",SHEET_ID_DEFAULT);
-  const lnk=cfgGet("fbi:link","https://docs.google.com/spreadsheets/d/"+SHEET_ID_DEFAULT+"/edit");
+  const base=cfgGet("fbi:apiBase",VERCEL_DEFAULT), key=cfgGet("fbi:apiKey",""),
+        cid=cfgGet("fbi:clientId",""), sid=cfgGet("fbi:sheetId",SHEET_ID_DEFAULT),
+        lnk=cfgGet("fbi:link","https://docs.google.com/spreadsheets/d/"+SHEET_ID_DEFAULT+"/edit");
+  const onVercel = (typeof location !== "undefined" && String(location.protocol||"").startsWith("http"));
   return `
-  <div class="card" style="margin-bottom:14px;border-left:3px solid var(--grn)">
-    <h3>13.1 · Paste your sheet link — start here</h3>
-    <div class="sub"><b>Two minutes, nothing to install.</b> Set the sheet to "anyone with the link can view",
-    paste the address, press the button. Works from this file on your laptop as well as on Vercel.</div>
-    <div class="ctl">
-      <label class="f">Sheet link</label>
-      <input type="url" id="gLink" placeholder="https://docs.google.com/spreadsheets/d/…" value="${esc(lnk)}" style="min-width:470px">
-      <button class="pri" onclick="pullBySheetLink()">Connect the sheet</button>
-    </div>
-    <div style="font-size:12.5px;color:var(--body);line-height:1.9;margin-top:4px">
-      <b>1.</b> Open the sheet → <b>Share</b> → under <b>General access</b> pick <b>Anyone with the link</b> → role <b>Viewer</b> → Done.<br>
-      <b>2.</b> Copy the address out of the browser bar and paste it above.<br>
-      <b>3.</b> Press <b>Connect the sheet</b>.<br>
-      <span style="color:var(--amb)">Anyone who gets that link can read the sheet. If the data is sensitive, use option B below instead.</span>
-    </div>
-    <div class="log" id="gLog"></div>
+  <div class="callout info" style="margin-bottom:16px">
+    <h4>Which one do you need?</h4>
+    <p><b>If the sheet must stay private</b> — and it does — you have two choices and both keep it private.
+    <b>Option A</b> uses your own Google login, so you see exactly the sheets you already have access to.
+    <b>Option B</b> shares the sheet with a robot address instead, so nobody has to log in at all and it keeps
+    working overnight. <b>You have already created the robot</b>, so B is the shorter path from here.</p>
   </div>
 
   <div class="card" style="margin-bottom:14px;border-left:3px solid var(--cy)">
-    <h3>13.2 · Keep the sheet private — service account through Vercel</h3>
-    <div class="sub">Fifteen minutes once, then it runs itself. The sheet stays private and you share it with a
-    robot address instead. <b>This is what you want long term.</b></div>
-
-    <div class="fl" style="margin-top:0">A · Service account, through your own Vercel function</div>
-    <div style="font-size:12.5px;color:var(--mute);line-height:1.7;margin:6px 0 10px">
-      You share the sheet with a robot address once. After that this button just works, for anyone,
-      with no login. <b>This is the one to set up.</b></div>
-    <div class="ctl">
-      <label class="f">Vercel URL</label>
-      <input type="url" id="gApiBase" placeholder="https://fde-dashboard-iota.vercel.app" value="${esc(base)}" style="min-width:330px">
-      <label class="f">API key</label>
-      <input type="text" id="gApiKey" placeholder="the API_KEY you set in Vercel" value="${esc(key)}" style="min-width:230px">
-      <button class="pri" onclick="pullViaApi()">Pull the sheet now</button>
-      <button onclick="gDiagnose()">Test the connection</button>
+    <h3>13.1 · Option A — sign in with your own Google account</h3>
+    <div class="sub">You log in, the tool reads the sheet as you. Nothing is shared publicly and nothing is stored —
+    the token lives in this tab and dies when you close it.</div>
+    ${onVercel?"":`<div class="callout" style="margin:0 0 12px"><h4>This will not work from here</h4>
+      <p>You have opened this as a file on your machine. Google will refuse to sign you in because
+      <span class="mono">file://</span> is not an address it can verify. Open
+      <span class="mono">${VERCEL_DEFAULT}</span> and use this box there.</p></div>`}
+    <div style="font-size:12.5px;color:var(--body);line-height:1.9;margin-bottom:10px">
+      <b>Set it up once:</b><br>
+      <b>1.</b> Google Cloud Console → your <span class="mono">fde-504106</span> project →
+        APIs &amp; Services → Library → enable <b>Google Sheets API</b>.<br>
+      <b>2.</b> APIs &amp; Services → <b>OAuth consent screen</b>. Pick <b>Internal</b> if everyone is on the same
+        Google Workspace — that skips Google's review entirely. Add the scope
+        <span class="mono">.../auth/spreadsheets.readonly</span>.<br>
+      <b>3.</b> Credentials → Create credentials → <b>OAuth client ID</b> → <b>Web application</b>.<br>
+      <b>4.</b> Under <b>Authorised JavaScript origins</b> add exactly this, nothing after it:
+        <span class="mono">${VERCEL_DEFAULT}</span>
+        <button class="gh" style="padding:1px 7px;font-size:11px" onclick="gCopy('${VERCEL_DEFAULT}','The origin')">copy</button><br>
+      <b>5.</b> Copy the Client ID it gives you into the box below.
     </div>
-    <div class="mute" style="font-size:11.5px;margin-bottom:16px">Leave the URL blank only if you are viewing this
-    <b>on Vercel</b>. If you opened the file from your machine you must paste the full Vercel address, or the browser
-    has nothing to call. <b>Press "Test the connection" first</b> — it tells you exactly which step is broken instead of
-    just saying it failed.</div>
-
-    <div class="fl">B · Sign in as yourself</div>
-    <div style="font-size:12.5px;color:var(--mute);line-height:1.7;margin:6px 0 10px">
-      Uses your own Google account, so you only see sheets you already have access to. Nothing is stored —
-      the token lives in the tab and dies with it. <b>Only works on the Vercel address</b>, because Google needs a
-      registered origin.</div>
     <div class="ctl">
       <label class="f">OAuth Client ID</label>
       <input type="text" id="gClientId" placeholder="…apps.googleusercontent.com" value="${esc(cid)}" style="min-width:340px">
       <label class="f">Sheet ID</label>
-      <input type="text" id="gSheetId" value="${esc(sid)}" style="min-width:290px">
-      <button onclick="gSignIn()">Sign in with Google</button>
-      <button onclick="pullViaToken()">Pull</button>
+      <input type="text" id="gSheetId" value="${esc(sid)}" style="min-width:280px">
+    </div>
+    <div class="ctl">
+      <button class="pri" onclick="gSignIn()">Sign in with Google</button>
+      <button onclick="pullViaToken()">Pull the sheet</button>
       <button class="gh" onclick="gSignOut()">Sign out</button>
     </div>
+  </div>
 
-    <div class="ctl" style="margin-top:6px">
+  <div class="card" style="margin-bottom:14px;border-left:3px solid var(--grn)">
+    <h3>13.2 · Option B — share the sheet with your service account</h3>
+    <div class="sub">You already made this one. Nobody logs in, the sheet stays private, and it keeps refreshing
+    when you are away from your desk. <b>This is the one to run day to day.</b></div>
+    <div class="callout ok" style="margin:0 0 12px">
+      <h4>Step one, and it is the only one that grants access</h4>
+      <p>Open the sheet → <b>Share</b> → paste this address → set it to <b>Viewer</b> → untick "Notify people"
+      (it is a robot, it has no inbox) → Share.</p>
+      <p style="margin-top:8px"><span class="mono" style="font-size:12.5px;background:var(--s100);padding:4px 9px;border-radius:5px">${SA_EMAIL_DEFAULT}</span>
+      <button class="gh" style="padding:2px 9px;font-size:11px" onclick="gCopy('${SA_EMAIL_DEFAULT}','The service account address')">copy</button></p>
+    </div>
+    <div style="font-size:12.5px;color:var(--body);line-height:1.9;margin-bottom:10px">
+      <b>Then, once:</b><br>
+      <b>1.</b> Commit <span class="mono">api/sheet.js</span> to the repo at exactly that path and push.<br>
+      <b>2.</b> Vercel → Settings → Environment Variables, add four:
+        <span class="mono" style="display:block;margin:6px 0 6px 18px;line-height:2">
+        GOOGLE_SA_EMAIL = ${SA_EMAIL_DEFAULT}<br>
+        GOOGLE_SA_KEY &nbsp;&nbsp;= the private_key from your JSON file, \\n sequences left alone<br>
+        SHEET_ID &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= ${SHEET_ID_DEFAULT}<br>
+        API_KEY &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= any long random string you invent</span>
+      <b>3.</b> <b>Redeploy.</b> Vercel only reads new variables on a fresh build — this is the step people miss.<br>
+      <b>4.</b> Come back here, fill the two boxes, and press <b>Test the connection</b>.
+    </div>
+    <div class="ctl">
+      <label class="f">Vercel URL</label>
+      <input type="url" id="gApiBase" placeholder="${VERCEL_DEFAULT}" value="${esc(base)}" style="min-width:320px">
+      <label class="f">API key</label>
+      <input type="text" id="gApiKey" placeholder="the API_KEY you set in Vercel" value="${esc(key)}" style="min-width:220px">
+    </div>
+    <div class="ctl">
+      <button class="pri" onclick="pullViaApi()">Pull the sheet now</button>
+      <button onclick="gDiagnose()">Test the connection</button>
       <label class="f">Refresh on its own</label>
       <select id="gEvery" onchange="gAuto()">
         <option value="0">Off</option><option value="15">Every 15 min</option>
         <option value="30">Every 30 min</option><option value="60">Hourly</option></select>
       <span class="mono mute" style="font-size:11px" id="gWhen">not pulled yet</span>
     </div>
-    <div class="log" id="gLog2"></div>
+    <div class="log" id="gLog"></div>
   </div>
 
   <div class="card" style="margin-bottom:14px">
-    <h3>13.3 · Setting up the service account, once</h3>
-    <div class="sub">Fifteen minutes, and then you never touch it again.</div>
-    <div style="font-size:12.5px;color:var(--body);line-height:1.9">
-      <b>1.</b> Google Cloud Console → make a project (or reuse one) → <b>enable the Google Sheets API</b>.<br>
-      <b>2.</b> IAM &amp; Admin → Service Accounts → <b>Create service account</b> → Keys → Add key → JSON. A file downloads.<br>
-      <b>3.</b> Open your sheet → <b>Share</b> → paste the <span class="mono">client_email</span> from that JSON →
-        give it <b>Viewer</b>. This is the "share the sheet and it has access" bit.<br>
-      <b>4.</b> Commit <span class="mono">api/sheet.js</span> to your repo.<br>
-      <b>5.</b> Vercel → Settings → Environment Variables, add four:<br>
-        <span class="mono" style="display:inline-block;margin:6px 0 6px 18px;line-height:2">
-        GOOGLE_SA_EMAIL &nbsp;= the client_email from the JSON<br>
-        GOOGLE_SA_KEY &nbsp;&nbsp;&nbsp;= the private_key from the JSON, newlines as \\n<br>
-        SHEET_ID &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= ${SHEET_ID_DEFAULT}<br>
-        API_KEY &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= any long random string you make up</span><br>
-      <b>6.</b> Redeploy. Open <span class="mono">/api/sheet?key=YOUR_API_KEY</span> in a browser — you should see JSON.<br>
-      <b>7.</b> Come back here, put the Vercel URL and the API key in box A, and press Pull.
+    <h3>13.3 · Option C — a public link</h3>
+    <div class="sub">Only if your policy allows it. Anyone holding the link can read the sheet, so this is the wrong
+    choice for lead data with names or numbers in it. Left here because it needs nothing installed.</div>
+    <div class="ctl">
+      <label class="f">Sheet link</label>
+      <input type="url" id="gLink" placeholder="https://docs.google.com/spreadsheets/d/…" value="${esc(lnk)}" style="min-width:420px">
+      <button onclick="pullBySheetLink()">Connect the sheet</button>
     </div>
+    <div class="mute" style="font-size:11.5px">Needs the sheet set to "Anyone with the link can view". If your admin
+    blocks that, use A or B above — both work with the sheet fully private.</div>
+    <div class="log" id="gLog3"></div>
   </div>
 
   <div class="card" style="margin-bottom:14px">
-    <h3>13.4 · If you want the sign-in button as well</h3>
-    <div class="sub">Optional. Only needed if different people should see different sheets.</div>
-    <div style="font-size:12.5px;color:var(--body);line-height:1.9">
-      <b>1.</b> Google Cloud Console → APIs &amp; Services → <b>OAuth consent screen</b>. Internal if everyone is on the
-        same Google Workspace, External otherwise. Add the scope
-        <span class="mono">.../auth/spreadsheets.readonly</span>.<br>
-      <b>2.</b> Credentials → Create credentials → <b>OAuth client ID</b> → Web application.<br>
-      <b>3.</b> Under <b>Authorised JavaScript origins</b> add exactly:<br>
-        <span class="mono" style="display:inline-block;margin:6px 0 6px 18px">https://fde-dashboard-iota.vercel.app</span><br>
-      <b>4.</b> Copy the Client ID into box B above.<br>
-      <span style="color:var(--red)"><b>This will not work from a file on your laptop</b> — Google will reject it,
-      because <span class="mono">file://</span> is not an origin it can verify. Use the Vercel address.</span>
+    <h3>13.4 · If it will not connect</h3>
+    <div class="sub" style="margin:0;line-height:1.9">
+      <b style="color:var(--ink)">Sign-in popup opens then closes with nothing happening</b> — the address you are on
+      is not in Authorised JavaScript origins. It has to match character for character, no trailing slash.<br>
+      <b style="color:var(--ink)">"Access blocked: this app is not verified"</b> — set the consent screen to Internal,
+      or add yourself as a test user.<br>
+      <b style="color:var(--ink)">Signed in fine but the sheet 403s</b> — that Google account cannot open the sheet.
+      Share it with them, or sign in as someone who can.<br>
+      <b style="color:var(--ink)">/api/sheet returns 404</b> — the function is not deployed. It must sit at exactly
+      <span class="mono">api/sheet.js</span> in the repo root.<br>
+      <b style="color:var(--ink)">500 mentioning SA_EMAIL or SA_KEY</b> — the variables are saved but you have not
+      redeployed since.<br>
+      <b style="color:var(--ink)">"permission" or "not found" from the API</b> — the sheet is not shared with
+      <span class="mono">${SA_EMAIL_DEFAULT}</span> yet. That share is the only thing that grants access.
     </div>
   </div>`;
 }

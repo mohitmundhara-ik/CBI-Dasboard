@@ -2427,7 +2427,11 @@ async function gDiagnose(){
   if(r.status===500 && j?.error){
     gLog("   500: "+j.error,"em");
     if(/SA_EMAIL|SA_KEY/.test(j.error)) gLog("   The environment variables are missing. Add them in Vercel, then REDEPLOY - Vercel only picks them up on a new build.","em");
-    if(/PEM|DECODER/.test(j.error))     gLog("   The private key got mangled. Paste it again from the JSON, keeping the \\n sequences exactly as they are.","em");
+    if(/PEM|DECODER|private key/i.test(j.error)){
+      gLog("   The private key could not be read. Open this in a browser tab, it tells you exactly what shape the key is in and never shows the key itself:","em");
+      gLog("   "+url+"?key="+encodeURIComponent(key||"YOUR_API_KEY")+"&debug=1","em");
+      gLog("   Most common cause: only the private_key VALUE should go in GOOGLE_SA_KEY, not the whole JSON file, and not with quotes around it.","em");
+    }
     return;
   }
   if(!r.ok || j?.error){
@@ -2437,6 +2441,38 @@ async function gDiagnose(){
   }
   gLog("4. It worked. "+Object.entries(j.counts||{}).map(([k,v])=>`${k}: ${v} rows`).join(" · "),"b");
   gLog("   Press 'Pull the sheet now' to load it in.","b");
+}
+
+/* ---------- inspect the key without ever showing it ---------- */
+async function gDebug(){
+  const base=($("gApiBase")?.value||"").trim().replace(/\/+$/,"");
+  const key =($("gApiKey")?.value||"").trim();
+  const url =(base||"")+"/api/sheet?debug=1"+(key?("&key="+encodeURIComponent(key)):"");
+  gLog("Asking the server what shape the key is in…");
+  try{
+    const r=await fetch(url,{headers:key?{"x-api-key":key}:{}});
+    const j=await r.json();
+    if(j.error){ gLog("   "+j.error,"em"); return }
+    const e=j.env||{}, k=j.privateKey;
+    gLog(`GOOGLE_SA_EMAIL ${e.GOOGLE_SA_EMAIL}`);
+    gLog(`SHEET_ID ${e.SHEET_ID} · GOOGLE_SA_KEY ${e.GOOGLE_SA_KEY} · API_KEY ${e.API_KEY}`);
+    if(k && k.asStored){
+      const a=k.asStored;
+      gLog(`Key as stored: ${a.length} characters, ${a.lineCount} line${a.lineCount===1?"":"s"}`
+        + (a.hasBeginLine?", has a BEGIN line":", NO BEGIN line")
+        + (a.wrappedInQuotes?", still wrapped in quotes":"")
+        + (a.looksLikeWholeJsonFile?", looks like the whole JSON file":"")
+        + (a.hasLiteralBackslashN?", uses literal \\n":"")
+        + (a.hasCarriageReturns?", has carriage returns":""));
+      gLog(`After repair: ${k.afterRepair.lineCount} lines, signs correctly: ${k.afterRepair.signs}`,
+           k.afterRepair.signs?"b":"em");
+      if(!k.afterRepair.signs && k.afterRepair.signError) gLog("   "+k.afterRepair.signError,"em");
+    }
+    gLog(j.whatToDo, /fine/.test(j.whatToDo||"")?"b":"em");
+  }catch(err){
+    gLog("Could not reach the debug endpoint: "+err.message,"em");
+    gLog("If /api/sheet 404s, the function is not deployed yet.","em");
+  }
 }
 
 /* ---------- B. sign in as yourself ---------- */
@@ -2590,7 +2626,7 @@ function googlePanel(){
       <b>2.</b> Vercel → Settings → Environment Variables, add four:
         <span class="mono" style="display:block;margin:6px 0 6px 18px;line-height:2">
         GOOGLE_SA_EMAIL = ${SA_EMAIL_DEFAULT}<br>
-        GOOGLE_SA_KEY &nbsp;&nbsp;= the private_key from your JSON file, \\n sequences left alone<br>
+        GOOGLE_SA_KEY &nbsp;&nbsp;= the <b>private_key value only</b> from the JSON. Not the whole file, no quotes around it.<br>
         SHEET_ID &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= ${SHEET_ID_DEFAULT}<br>
         API_KEY &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= any long random string you invent</span>
       <b>3.</b> <b>Redeploy.</b> Vercel only reads new variables on a fresh build — this is the step people miss.<br>
@@ -2605,6 +2641,7 @@ function googlePanel(){
     <div class="ctl">
       <button class="pri" onclick="pullViaApi()">Pull the sheet now</button>
       <button onclick="gDiagnose()">Test the connection</button>
+      <button onclick="gDebug()">Inspect the key</button>
       <label class="f">Refresh on its own</label>
       <select id="gEvery" onchange="gAuto()">
         <option value="0">Off</option><option value="15">Every 15 min</option>
@@ -2641,6 +2678,10 @@ function googlePanel(){
       <span class="mono">api/sheet.js</span> in the repo root.<br>
       <b style="color:var(--ink)">500 mentioning SA_EMAIL or SA_KEY</b> — the variables are saved but you have not
       redeployed since.<br>
+      <b style="color:var(--ink)">"DECODER routines::unsupported"</b> — the private key is mangled. Press
+      <b>Inspect the key</b> above. It reports the shape of the key without ever showing it, and tells you which of the
+      usual mistakes it is. Nine times out of ten it is the whole JSON file in the box instead of just the
+      <span class="mono">private_key</span> value, or quotes left around it.<br>
       <b style="color:var(--ink)">"permission" or "not found" from the API</b> — the sheet is not shared with
       <span class="mono">${SA_EMAIL_DEFAULT}</span> yet. That share is the only thing that grants access.
     </div>

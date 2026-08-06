@@ -58,8 +58,7 @@ aside.side>*{position:relative;z-index:1}
 .side nav a:hover{background:rgba(255,255,255,.06);color:#fff}
 .side nav a.on{background:linear-gradient(100deg,var(--cy),#39C6E2);color:#04222C;font-weight:600;
   box-shadow:0 2px 10px rgba(0,169,206,.34)}
-.side nav a .n{font-family:'IBM Plex Mono',monospace;font-size:9.5px;opacity:.55;width:16px}
-.side nav a.on .n{opacity:.7}
+
 .side nav a .ct{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;opacity:.6}
 .sidefoot{padding:10px 12px;border-top:1px solid rgba(255,255,255,.1);font-size:10.5px;
   color:rgba(255,255,255,.45);font-family:'IBM Plex Mono',monospace}
@@ -85,10 +84,11 @@ button.pri{background:linear-gradient(180deg,#1CBBDA,var(--cy));border-color:var
 button.pri:hover{background:linear-gradient(180deg,var(--cy),var(--cy-d));color:#fff}
 button.gh{background:none;border-color:transparent}
 button.gh:hover{background:var(--s100)}
-select,input[type=text],input[type=search],input[type=url],input[type=number]{
+textarea,select,input[type=text],input[type=search],input[type=url],input[type=number]{
   background:var(--s0);border:1px solid var(--s300);color:var(--ink);border-radius:7px;
   padding:7px 10px;font-family:Inter,sans-serif;font-size:12.5px}
-select:focus,input:focus{outline:2px solid var(--cy-l);border-color:var(--cy)}
+select:focus,input:focus,textarea:focus{outline:2px solid var(--cy-l);border-color:var(--cy)}
+textarea{font-family:Inter,sans-serif;line-height:1.5;resize:vertical}
 label.f{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.13em;
   text-transform:uppercase;color:var(--mute);margin-right:-3px}
 .ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
@@ -2926,12 +2926,464 @@ function exportWV(){
   a.download=`FBI_webinar_${(WVBATCH||"").replace(/\W+/g,"_")}.csv`;a.click();
 }
 
+/* ============ CALL ANALYSIS — prompt generator + the agent ============
+   Three things on one page:
+   1. Pick a cohort from the data already loaded, get its HubSpot IDs.
+   2. Write the conditions in plain words, get a prompt back in the house
+      structure - same section order, same hierarchy, same schema style.
+   3. Run it against the agent, embedded here.                              */
+
+const AGENT_URL = "https://call-analysis-agent-841321224682.us-central1.run.app";
+const GUIDE_URL = "https://docs.google.com/document/d/1EjMjtm7WHMOKgIqXYiojKHMJeC_fwqwTS48Y8DFinwA/edit";
+const TOKEN_CAP = 4000;
+
+let CA = {
+  cohort: "noshow_engaged",
+  preset: "dormancy",
+  title: "",
+  role: "",
+  objective: "",
+  dims: [],          // user-added analysis dimensions
+  extraRules: "",
+  built: "",
+  agentReady: false,
+};
+
+/* ---------- token budget, using the project's own two-part method ----------
+   Numeric HubSpot IDs tokenize at roughly 3.5 tokens each.
+   Instructional prose is chars/4. Counting them separately is the only way
+   to get near the truth, because IDs are dense and prose is not.          */
+function tokenCount(prose, ids){
+  const idTok = ids.length * 3.5;
+  const proseTok = Math.ceil(S(prose).length / 4);
+  return { ids: Math.round(idTok), prose: proseTok, total: Math.round(idTok + proseTok) };
+}
+
+/* ---------- cohorts, pulled from what is already loaded ---------- */
+const CA_COHORTS = [
+  ["noshow_engaged",  "Talked 5+ min, then did not come",  () => UNIV.filter(r=>r.noshow_type==="ENGAGED_NO_SHOW")],
+  ["noshow_all",      "Everyone who never came",           () => UNIV.filter(r=>r.cohort==="NO_SHOW")],
+  ["noshow_dormant",  "No-shows nobody has called since",  () => UNIV.filter(r=>r.followup_state==="ABANDONED_SINCE_WEBINAR")],
+  ["attended_unread", "Came, calls not read yet",          () => UNIV.filter(r=>r.cohort==="ATTENDED_UNANALYSED")],
+  ["never_worked",    "Came, nobody called since",         () => UNIV.filter(r=>r.scenario==="S10_ATTENDED_NEVER_WORKED")],
+  ["reminder_only",   "Only ever got a reminder call",     () => ROWS.filter(r=>r.call_type==="WEBINAR_REMINDER_ONLY")],
+  ["repitch",         "Warm lead, weak call",              () => ROWS.filter(r=>r.action_bucket==="RE_PITCH_FDE")],
+  ["hot_nodate",      "Hot, no next step agreed",          () => ROWS.filter(r=>r.temperature==="HOT"&&r.next_step_status!=="DEFINED")],
+  ["existing",        "Already an IK student",             () => UNIV.filter(r=>num(r.existing_student)===1&&num(r.enrolled_in_fde)===0)],
+  ["noniql",          "Non-IQL who came anyway",           () => NONIQL],
+  ["explore",         "Whatever Explore is filtered to",   () => (window._XR||[])],
+];
+function caLeads(){
+  const c = CA_COHORTS.find(x=>x[0]===CA.cohort);
+  return c ? c[2]() : [];
+}
+function caIds(){ return caLeads().map(r=>String(r.hubspot_id)).filter(Boolean) }
+
+/* ---------- presets: a starting shape, not a cage ---------- */
+const CA_PRESETS = {
+  dormancy: {
+    title: "DORMANCY DIAGNOSTIC — DCD LAST-CALL NARRATIVE & NO-FOLLOW-UP ROOT CAUSE AUDIT",
+    role: "You are a Senior Sales Quality & Lifecycle Dormancy Analyst for Interview Kickstart.\nYour task is to conduct a deep qualitative call analysis for a lead who was contacted at least once and then went dormant — no subsequent follow-up, no re-probing, and no next-call scheduling after their last recorded call.",
+    objective: "For a previously-contacted but now-dormant lead, produce a structured, warehouse-joinable diagnostic that explains what was said, where the conversation stopped, and why no further contact occurred.",
+    dims: [
+      ["Complete Conversation Narrative","Reconstruct the full engagement across all completed calls, chronologically: opening, discovery, positioning, objection-handling, closing.","complete_conversation_narrative"],
+      ["Last-Call Narrative","Focus only on the most recent completed call. What was discussed, the state it was left in, any commitment or open thread.","last_call_narrative"],
+      ["DCD Questions Asked","Extract the discovery and qualification questions the PA actually asked. Capture what was asked, not what should have been asked.","dcd_questions_asked"],
+      ["Lead Pain Points","Explicitly stated frustrations, skill-gap concerns, career stagnation, or job-search difficulty.","lead_pain_points|pain_points_evidence"],
+      ["Lead Objectives & Skill Gap","The lead's stated goal and the specific skill gap they want to close.","lead_objectives|objectives_evidence|skill_gap_identified|skill_gap_evidence"],
+      ["Lead Objections","Objections raised: pricing, time commitment, relevance doubt, ROI concern, employer approval, timing.","lead_objections|objections_evidence"],
+      ["Last-Call Outcome & Stop-Context","The concrete outcome and the precise point the relationship stopped progressing.","last_call_outcome|stop_context"],
+      ["Dormancy Root Cause","Classify why no further contact occurred, using exactly one enum value.","dormancy_root_cause|dormancy_reasoning"],
+      ["Recommended Next Action","The most appropriate recovery action, based strictly on conversation dynamics.","recommended_next_action"],
+    ],
+    enums: "● LEAD_REQUESTED_TIME — the lead explicitly asked to be contacted later with a concrete timeframe\n● DEFERRED_INTENT — conditional, time-bound, recoverable interest; recoverable, NOT disinterest\n● PA_INACTION — the lead was open or had a pending next step, but the PA did not follow up\n● LEAD_NOT_INTERESTED — the lead clearly and unconditionally declined\n● UNCLEAR — the transcript does not contain enough signal to attribute a cause",
+  },
+  webinar: {
+    title: "POST-WEBINAR CALL AUDIT — FDE INTEREST, FRAMING COMPLIANCE & NEXT-STEP DISCIPLINE",
+    role: "You are a Senior Sales Quality Analyst for Interview Kickstart.\nYour task is to audit the calls made to a lead who registered for the Forward Deployed Engineering masterclass, and assess how the programme was introduced, how the lead was qualified, and whether the call closed properly.",
+    objective: "For a post-webinar lead, produce a structured, warehouse-joinable audit of pitch quality that separates a weak lead from a weak call.",
+    dims: [
+      ["Complete Conversation Narrative","Reconstruct the full engagement across all calls, chronologically.","complete_conversation_narrative"],
+      ["FDE Introduction Compliance","How the PA introduced the Forward Deployed Engineer role. Compliant framing names the role correctly, references India demand, and maps it to the lead's background.","pa_fde_introduction_verbatim|pa_fde_introduction_assessment"],
+      ["Profile Discovery Quality","The questions asked about the lead's background, and how thoroughly.","profile_discovery_verbatim|profile_discovery_quality"],
+      ["Probing & Mapping","Whether the PA dug into what the lead said and mapped it to the programme.","probing_mapping_evidence|probing_and_mapping_quality"],
+      ["Urgency Creation","Whether the PA gave a reason to act now: batch date, seat cap, or hiring window.","urgency_creation_verbatim|urgency_creation_assessment"],
+      ["FDE Interest Signal","How interested the lead actually sounded in the role itself.","fde_interest_signal|fde_interest_evidence"],
+      ["Lead Pain Points","Explicitly stated frustrations or career concerns.","lead_pain_points|pain_points_evidence"],
+      ["Lead Objections","Objections raised, with transcript evidence.","lead_objections|objections_evidence"],
+      ["Programme Details Shared","Which specifics about the course were actually communicated.","program_details_shared"],
+      ["Call Ending & Next Step","How the call ended and whether a dated next step was agreed.","stop_context|last_call_outcome|next_step_status"],
+      ["Recommended Next Action","The most appropriate next action based on the conversation.","recommended_next_action"],
+    ],
+    enums: "● DEFINED — a dated, specific next step was agreed\n● VAGUE — a next step was mentioned but with no date or owner\n● NOT_DEFINED — the call ended with nothing agreed\n● NOT_APPLICABLE — no substantive conversation took place",
+  },
+  custom: {
+    title: "", role: "", objective: "", dims: [], enums: "",
+  },
+};
+
+function caLoadPreset(k){
+  const p = CA_PRESETS[k];
+  CA.preset = k;
+  CA.title = p.title; CA.role = p.role; CA.objective = p.objective;
+  CA.dims = p.dims.map(d=>({name:d[0], what:d[1], keys:d[2]}));
+  CA.enums = p.enums || "";
+  render();
+}
+
+/* ---------- the generator ----------
+   Section order, hierarchy and schema style are fixed. Only the content
+   inside each section changes. This is what stops prompts drifting apart. */
+function caBuild(){
+  const ids = caIds();
+  const cohortLabel = (CA_COHORTS.find(c=>c[0]===CA.cohort)||[])[1] || "";
+  const keys = [];
+  CA.dims.forEach(d=>String(d.keys).split("|").map(x=>x.trim()).filter(Boolean).forEach(k=>{
+    if(!keys.includes(k)) keys.push(k);
+  }));
+  const allKeys = ["current_lead_status","program_discussed"].concat(keys);
+
+  const framework = CA.dims.map((d,i)=>
+    `${i+1}️⃣ ${d.name}\n${d.what}`).join("\n\n");
+
+  const schema = "{\n" + allKeys.map(k=>`"${k}": ""`).join(",\n") + "\n}";
+
+  const p =
+`${CA.title || "CALL ANALYSIS"}
+
+🔹 ROLE
+${CA.role || "You are a Senior Sales Quality Analyst for Interview Kickstart."}
+You must reconstruct, strictly from transcript evidence, every dimension listed below.
+Do NOT infer beyond the transcript. Do NOT speculate about CRM activity that is not present in the data source.
+
+🔹 OBJECTIVE
+${CA.objective || "Produce a structured, warehouse-joinable diagnostic for each lead."}
+The output is a flat, per-lead JSON record intended for BI-layer aggregation at PA and POD level.
+
+🔹 INPUTS
+Cohort: ${cohortLabel} (${ids.length} leads)
+HubSpot IDs:
+${ids.join(",")}
+
+🔹 TRANSCRIPT STRUCTURE
+- Calls are provided in CHRONOLOGICAL ORDER (oldest first, newest last).
+- Multiple calls are separated by: CALL N | Date: YYYY-MM-DD HH:MM:SS
+- Each call ends with: [END OF CALL N]
+- Treat the most recent completed call as the "last call."
+- Analyze ALL calls provided for this lead.
+- If no usable transcript content is provided → return "Not available in data source" for transcript-based fields. Do NOT fabricate, simulate, or infer transcript content.
+
+🔹 PROGRAM CONTEXT
+The program discussed must be identified FROM THE TRANSCRIPT, not assumed. Possible programs, in ascending ASP tier order:
+● Common → EdgeUp Paid → CRM → Flagship ML → LevelUp Paid → PwC Agentic AI → Talent500 → Agentic AI Edge → Forward Deployed Engineering (FDE)
+Program-framing notes that affect interpretation:
+● Talent500 leads are active job-seekers; correct framing anchors to placement outcomes, interview readiness, hiring-network access, and job-switch ROI. Generic upskilling framing for a Talent500 lead is a non-compliance signal, not a neutral observation.
+● A lead expressing conditional or time-bound interest (for example "let me finish my current interviews", "call me after my notice period") is expressing recoverable DEFERRED_INTENT. This is NOT disinterest and must never be classified as not-interested.
+● Advisors legitimately pitch more than one IK programme on a single call. Two different programmes being discussed is not a compliance failure. Two different prices for the SAME programme is.
+If the program cannot be identified from the transcript, set program_discussed to "Not explicitly mentioned in transcript".
+
+🔹 ANALYSIS FRAMEWORK
+Perform the following analysis. Each dimension maps to a separate output field. All findings must be transcript-supported.
+
+${framework}
+${CA.enums ? `\nPermitted enum values where the schema calls for a classification:\n${CA.enums}\n` : ""}
+🔒 HARD RULES
+● No arrays. No nested objects. No dynamic keys. No extra keys.
+● Flat JSON only. All values are strings.
+● Conditional / time-bound interest must be classified as recoverable, never as disinterest.
+● Generic upskilling framing applied to a Talent500 (active job-seeker) lead is a non-compliance signal and should be reflected in the narrative, not treated as neutral.
+● If a transcript is missing → fill transcript-based fields with "Not explicitly mentioned in transcript" or "Not available in data source" as appropriate, and still return the complete schema.
+● Do NOT output error objects or failure wrappers under any circumstance.${CA.extraRules ? "\n" + S(CA.extraRules).split("\n").filter(x=>x.trim()).map(x=>"● " + x.replace(/^[●\-*\s]+/,"")).join("\n") : ""}
+
+✅ OUTPUT FORMAT (STRICT — DO NOT CHANGE)
+Do NOT include a hubspot_id or any identifier field — the system adds the correct identifier automatically during post-processing. Any ID you write would be a guess and will corrupt the data.
+${schema}
+
+🔹 ERROR HANDLING (MANDATORY)
+If transcript or CRM data is missing:
+Populate transcript-based analytical fields with:
+"Not explicitly mentioned in transcript"
+or
+"Not available in data source"
+Still return the SAME complete schema.
+Never output:
+error
+status
+assessment_status
+reason
+details
+action_required
+call_analysis
+required_to_proceed
+
+🚫 FORBIDDEN KEYS
+Never output:
+error
+status
+assessment_status
+details
+reason
+action_required
+call_analysis
+required_to_proceed
+hubspot_id
+lead_id`;
+
+  CA.built = p;
+  return p;
+}
+
+/* The agent takes the instructions and the ID list in two separate boxes. */
+function caSplit(){
+  const full = CA.built || caBuild();
+  const ids = caIds();
+  const idBlock = `HubSpot IDs:\n${ids.join(",")}`;
+  const instructions = full.replace(/🔹 INPUTS[\s\S]*?(?=🔹 TRANSCRIPT STRUCTURE)/,
+    `🔹 INPUTS\nThe HubSpot IDs are supplied in the User Request field.\n\n`);
+  return { request: idBlock, instructions };
+}
+
+function caCopy(what){
+  const s = caSplit();
+  const txt = what==="request" ? s.request : what==="instructions" ? s.instructions : (CA.built||caBuild());
+  try{ navigator.clipboard.writeText(txt);
+       caLog(`${what==="request"?"User Request":what==="instructions"?"Analysis Instructions":"The whole prompt"} copied.`,"b") }
+  catch(e){ caLog("Could not copy automatically. Select the text in the box and copy it.","em") }
+}
+function caLog(m,c){ const el=$("caLog"); if(el) el.innerHTML=`<div>${c?`<${c}>${m}</${c}>`:m}</div>`+el.innerHTML }
+function caDownload(){
+  const s = caSplit();
+  const txt = `=== USER REQUEST ===\n${s.request}\n\n=== ANALYSIS INSTRUCTIONS ===\n${s.instructions}\n`;
+  const b=new Blob([txt],{type:"text/plain"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(b);
+  a.download=`FBI_prompt_${CA.cohort}_${new Date().toISOString().slice(0,10)}.txt`; a.click();
+}
+function caAddDim(){
+  const n=($("caDimName")?.value||"").trim(), w=($("caDimWhat")?.value||"").trim(),
+        k=($("caDimKeys")?.value||"").trim();
+  if(!n||!k){ caLog("A dimension needs a name and at least one output key.","em"); return }
+  CA.dims.push({name:n, what:w||n, keys:k.replace(/[,\s]+/g,"|")});
+  render();
+}
+function caDelDim(i){ CA.dims.splice(i,1); render() }
+function caField(k,v){ CA[k]=v }
+
+function pageCallAnalysis(){
+  if(!CA.title && CA.preset) caLoadPresetSilent(CA.preset);
+  const ids = caIds();
+  const prompt = caBuild();
+  const tk = tokenCount(prompt.replace(ids.join(","),""), ids);
+  const over = tk.total > TOKEN_CAP;
+  const keys = [];
+  CA.dims.forEach(d=>String(d.keys).split("|").map(x=>x.trim()).filter(Boolean).forEach(k=>{if(!keys.includes(k))keys.push(k)}));
+
+  let h=`<section><div class="eyebrow">Call analysis</div>
+   <h1 class="pg">Run an analysis</h1>
+   <p class="lede">Pick who to analyse, say what you want to know, and get a prompt back in the house format —
+   same section order, same schema style, every time. Then run it against the agent below.</p>
+
+   <div class="grid" style="grid-template-columns:1fr 1fr">
+   <div class="card"><h3>Who to analyse</h3>
+     <div class="ctl">
+       <select onchange="CA.cohort=this.value;render()" style="min-width:300px">
+         ${CA_COHORTS.map(([k,l,fn])=>{
+            let n=0; try{n=fn().length}catch(e){}
+            return `<option value="${k}" ${CA.cohort===k?"selected":""}>${l} (${n})</option>`}).join("")}
+       </select>
+     </div>
+     <div class="fl" style="margin-top:0">HubSpot IDs</div>
+     <div class="vb" style="max-height:120px;font-family:'IBM Plex Mono',monospace;font-size:11px">${ids.length?esc(ids.join(",")):"No leads in this cohort."}</div>
+     <div class="mute" style="font-size:11.5px">${ids.length} leads. Pulled live from the data loaded in this tool, so it always matches what you are looking at.</div>
+   </div>
+
+   <div class="card"><h3>Token budget</h3>
+     <div class="sub">IDs tokenise at about 3.5 each; prose at characters over four. Counted separately because
+     mixing them gives a number that is always wrong.</div>
+     <div class="hbar"><div class="nm">HubSpot IDs</div>
+       <div class="tr"><i style="width:${Math.min(100,tk.ids/TOKEN_CAP*100)}%;background:var(--cy)"></i></div>
+       <div class="vn">${tk.ids}</div></div>
+     <div class="hbar"><div class="nm">Instructions</div>
+       <div class="tr"><i style="width:${Math.min(100,tk.prose/TOKEN_CAP*100)}%;background:var(--navy-l)"></i></div>
+       <div class="vn">${tk.prose}</div></div>
+     <div class="hbar"><div class="nm"><b>Total</b></div>
+       <div class="tr"><i style="width:${Math.min(100,tk.total/TOKEN_CAP*100)}%;background:${over?"var(--red)":"var(--grn)"}"></i></div>
+       <div class="vn" style="color:${over?"var(--red)":"var(--grn)"};font-weight:700">${tk.total} / ${TOKEN_CAP}</div></div>
+     ${over?`<div class="callout" style="margin:10px 0 0"><h4>Over the cap by ${tk.total-TOKEN_CAP} tokens</h4>
+       <p>Split the ID list into batches. At the current instruction length you can carry about
+       <b>${Math.max(0,Math.floor((TOKEN_CAP-tk.prose)/3.5))}</b> IDs per run.</p></div>`
+       :`<div class="mute" style="font-size:11.5px;margin-top:8px">Room for about
+       <b>${Math.max(0,Math.floor((TOKEN_CAP-tk.prose)/3.5)-ids.length)}</b> more IDs at this instruction length.</div>`}
+   </div></div>`;
+
+  // ---- what to ask ----
+  h+=`<h3 style="margin-top:24px;font-size:16px;font-weight:800;letter-spacing:-.02em">What to ask</h3>
+   <div class="ctl">
+     <label class="f">Start from</label>
+     <select onchange="caLoadPreset(this.value)">
+       <option value="dormancy" ${CA.preset==="dormancy"?"selected":""}>Dormancy diagnostic</option>
+       <option value="webinar" ${CA.preset==="webinar"?"selected":""}>Post-webinar call audit</option>
+       <option value="custom" ${CA.preset==="custom"?"selected":""}>Blank</option>
+     </select>
+     <button class="pri" onclick="render()">Rebuild the prompt</button>
+     <button onclick="caDownload()">Download as text</button>
+   </div>
+   <div class="card">
+     <div class="fl" style="margin-top:0">Title</div>
+     <input type="text" value="${esc(CA.title)}" oninput="caField('title',this.value)" style="width:100%;margin-top:5px">
+     <div class="fl">Role — who the analyst is</div>
+     <textarea oninput="caField('role',this.value)" rows="3" style="width:100%;margin-top:5px">${esc(CA.role)}</textarea>
+     <div class="fl">Objective — what the output is for</div>
+     <textarea oninput="caField('objective',this.value)" rows="2" style="width:100%;margin-top:5px">${esc(CA.objective)}</textarea>
+     <div class="fl">Extra rules — one per line, optional</div>
+     <textarea oninput="caField('extraRules',this.value)" rows="2" placeholder="e.g. Treat any mention of a competitor course as a separate objection category"
+       style="width:100%;margin-top:5px">${esc(CA.extraRules)}</textarea>
+   </div>
+
+   <div class="card" style="margin-top:13px"><h3>What to look for</h3>
+     <div class="sub">Each one becomes a numbered section in the framework and its keys go into the schema.
+     ${CA.dims.length} dimension${CA.dims.length===1?"":"s"} · ${keys.length+2} keys in the output.</div>`;
+  CA.dims.forEach((d,i)=>{
+    h+=`<div style="display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--s100)">
+      <div class="mono" style="width:26px;flex-shrink:0;color:var(--faint)">${i+1}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700">${esc(d.name)}</div>
+        <div style="font-size:12px;color:var(--mute);line-height:1.55;margin-top:3px">${esc(d.what)}</div>
+        <div style="margin-top:5px">${S(d.keys).split("|").map(k=>`<span class="pill mono">${esc(k)}</span>`).join("")}</div>
+      </div>
+      <button class="gh" style="flex-shrink:0;align-self:flex-start" onclick="caDelDim(${i})">remove</button></div>`;
+  });
+  h+=`<div class="ctl" style="margin-top:12px">
+      <input type="text" id="caDimName" placeholder="Name, e.g. Competitor mentions" style="min-width:220px">
+      <input type="text" id="caDimWhat" placeholder="What the analyst should extract" style="min-width:320px">
+      <input type="text" id="caDimKeys" placeholder="output keys, comma separated" style="min-width:220px">
+      <button onclick="caAddDim()">Add</button>
+    </div></div>`;
+
+  // ---- the prompt ----
+  const sp = caSplit();
+  h+=`<h3 style="margin-top:24px;font-size:16px;font-weight:800;letter-spacing:-.02em">The prompt</h3>
+   <p class="lede" style="margin-bottom:12px">The agent takes two boxes. Copy each into the matching field.</p>
+   <div class="grid" style="grid-template-columns:1fr 2fr">
+   <div class="card"><h3>User Request</h3>
+     <div class="sub">Goes in the first box.</div>
+     <div class="vb" style="max-height:200px;font-family:'IBM Plex Mono',monospace;font-size:11px">${esc(sp.request)}</div>
+     <button class="pri" onclick="caCopy('request')">Copy</button></div>
+   <div class="card"><h3>Analysis Instructions</h3>
+     <div class="sub">Goes in the second box. Max about ${TOKEN_CAP} tokens.</div>
+     <div class="vb" style="max-height:420px;font-size:11.5px;white-space:pre-wrap">${esc(sp.instructions)}</div>
+     <button class="pri" onclick="caCopy('instructions')">Copy</button>
+     <button onclick="caCopy('all')">Copy the whole thing</button></div></div>
+   <div class="log" id="caLog"></div>`;
+
+  // ---- the agent ----
+  h+=`<h3 style="margin-top:24px;font-size:16px;font-weight:800;letter-spacing:-.02em">The agent</h3>
+   <div class="callout info"><h4>Sign in once, in a new tab, then it loads here</h4>
+     <p>The agent uses Google sign-in, and Google refuses to render its login page inside a frame — that is
+     Google's rule, not something this tool can change. So: <b>press "Sign in" below</b>, complete the Google login in
+     the tab that opens, close it, then press <b>Load the agent</b>. The session cookie is already set by then, so
+     the frame goes straight to the app.</p>
+     <p style="margin-top:8px">If your browser blocks third-party cookies the frame will bounce back to the sign-in
+     screen. In that case use <b>Open in a new tab</b> and work side by side — everything above still applies.</p></div>
+   <div class="ctl">
+     <button class="pri" onclick="window.open('${AGENT_URL}/login','_blank','noopener')">Sign in to the agent</button>
+     <button onclick="caLoadAgent()">Load the agent here</button>
+     <button onclick="window.open('${AGENT_URL}/app/','_blank','noopener')">Open in a new tab</button>
+     <button class="gh" onclick="window.open('${GUIDE_URL}','_blank','noopener')">User guide</button>
+   </div>
+   <div id="caFrameWrap"></div>`;
+
+  return h+"</section>";
+}
+function caLoadPresetSilent(k){
+  const p=CA_PRESETS[k]; if(!p) return;
+  CA.title=p.title; CA.role=p.role; CA.objective=p.objective;
+  CA.dims=p.dims.map(d=>({name:d[0],what:d[1],keys:d[2]}));
+  CA.enums=p.enums||"";
+}
+function caLoadAgent(){
+  const w=$("caFrameWrap"); if(!w) return;
+  w.innerHTML=`<div class="card" style="padding:0;overflow:hidden;margin-top:12px">
+    <iframe src="${AGENT_URL}/app/" style="width:100%;height:820px;border:0;display:block"
+      referrerpolicy="no-referrer-when-downgrade"></iframe></div>
+    <div class="mute" style="font-size:11.5px;margin-top:7px">If this shows the sign-in screen rather than the app,
+    the session cookie has not carried across. Press "Sign in to the agent" first, or use "Open in a new tab".</div>`;
+  CA.agentReady=true;
+}
+
+/* ============ CALL RECORDINGS — waiting on the API ============ */
+let REC = { base:"", key:"", rows:[] };
+function pageRecordings(){
+  let h=`<section><div class="eyebrow">Call recordings</div>
+   <h1 class="pg">Recordings</h1>
+   <p class="lede">Point this at the recordings API and the transcripts land next to the leads they belong to.
+   Nothing is wired yet because the endpoint has not been shared.</p>
+
+   <div class="card" style="border-left:3px solid var(--amb)">
+     <h3>What I need from you</h3>
+     <div class="sub">Three things, and this page starts working.</div>
+     <div style="font-size:12.5px;color:var(--body);line-height:1.9">
+       <b>1.</b> The base URL of the recordings API.<br>
+       <b>2.</b> How it authenticates — a bearer token, an API key header, or basic auth.<br>
+       <b>3.</b> One example response, so I can map the fields. Specifically: which field carries the
+       <span class="mono">hubspot_id</span> or lead email, which carries the transcript text or the VTT URL,
+       and which carries the call timestamp.<br><br>
+       If it returns WEBVTT, even better — those carry real timestamps per line, which is the one thing the current
+       analysis export does not have.
+     </div>
+   </div>
+
+   <div class="card" style="margin-top:13px">
+     <h3>Connection</h3>
+     <div class="sub">Fill these in once the endpoint exists. The tool will fetch, join on HubSpot ID, and attach the
+     transcript to every lead card.</div>
+     <div class="ctl">
+       <label class="f">API base URL</label>
+       <input type="url" id="recBase" placeholder="https://…" value="${esc(REC.base)}" style="min-width:340px">
+       <label class="f">Auth header</label>
+       <input type="text" id="recKey" placeholder="Bearer … or an API key" value="${esc(REC.key)}" style="min-width:240px">
+       <button class="pri" onclick="recTest()">Test it</button>
+     </div>
+     <div class="log" id="recLog"></div>
+   </div>
+
+   <div class="card" style="margin-top:13px">
+     <h3>What happens once it is connected</h3>
+     <div class="sub" style="margin:0;line-height:1.9">
+       Every lead card gains the full transcript, in call order, with timestamps if the source has them.<br>
+       The prompt generator can send transcript text directly rather than you exporting it by hand.<br>
+       The quote traceability on the sales briefing stops being "search this ID in the CRM" and becomes a direct link.<br>
+       The ${UNIV.length?UNIV.filter(r=>r.cohort!=="ATTENDED_ANALYSED").length:171} leads with no analysis yet can be
+       queued automatically instead of batched by hand.
+     </div>
+   </div></section>`;
+  return h;
+}
+function recLog(m,c){ const el=$("recLog"); if(el) el.innerHTML=`<div>${c?`<${c}>${m}</${c}>`:m}</div>`+el.innerHTML }
+async function recTest(){
+  const base=($("recBase")?.value||"").trim().replace(/\/+$/,"");
+  const key =($("recKey")?.value||"").trim();
+  if(!base){ recLog("Put the base URL in first.","em"); return }
+  REC.base=base; REC.key=key;
+  recLog(`Calling ${base}…`);
+  try{
+    const hdr={}; if(key) hdr["Authorization"]=key.startsWith("Bearer")?key:("Bearer "+key);
+    const r=await fetch(base,{headers:hdr});
+    const t=await r.text();
+    recLog(`HTTP ${r.status}. First 300 characters of the response:`, r.ok?"b":"em");
+    recLog(esc(t.slice(0,300)));
+    if(r.ok) recLog("Send me that response shape and I will map the fields and wire the join.","b");
+  }catch(e){
+    recLog("Could not reach it: "+e.message,"em");
+    recLog("If this is a CORS error the API will need to allow this origin, or it has to be proxied through the Vercel function like the Sheets one.","em");
+  }
+}
+
 /* ============ NAV ============ */
 const TABS=[
  ["THE PICTURE",[["lead","Summary"],["webinar","Webinar view"],["funnel","Funnel"],["explore","Explore"],["plan","Do this next"],["scen","Lead states"]]],
  ["THE TEAM",[["coach","PA coach"],["org","FDE org chart"],["pa","Advisors"],["discipline","Wrong info given"],["voice","What leads said"]]],
  ["THE LEADS",[["queue","Call list"],["noshow","No shows"],["noniql","Non-IQL leads"],["upsell","Existing students"],["segments","Groups"],["leads","Every lead"]]],
- ["KEEP IT FRESH",[["cover","Coverage & uploads"],["trend","Track progress"],["upload","Upload data"],["data","Connect live data"]]],
+ ["KEEP IT FRESH",[["analyse","Call analysis"],["rec","Recordings"],["cover","Coverage & uploads"],["trend","Track progress"],["upload","Upload data"],["data","Connect live data"]]],
 ];
 const TABCOUNT=()=>({
  queue:VIEW.length, noshow:UNIV.filter(r=>r.cohort==="NO_SHOW").length,
@@ -2939,16 +3391,16 @@ const TABCOUNT=()=>({
  discipline:UNIV.filter(r=>num(r.message_defect_count)>0).length, pa:new Set(VIEW.map(r=>r.pa_name_final)).size,
  noniql:NONIQL.length, coach:CARDS.length,
  explore:UNIV.length, webinar:UNIV.length, org:ORG.meta.total, cover:COVERAGE.todo,
+ analyse:CA_COHORTS.length,
  upsell:UNIV.filter(r=>num(r.existing_student)===1&&num(r.enrolled_in_fde)===0).length});
 function go(t){TAB=t;render()}
 function renderNav(){
-  const c=TABCOUNT();let n=1,h="";
+  const c=TABCOUNT();let h="";
   TABS.forEach(([grp,items])=>{
     h+=`<div class="grp">${grp}</div>`;
     items.forEach(([k,l])=>{
-      h+=`<a class="${TAB===k?'on':''}" onclick="go('${k}')">
-        <span class="n">${String(n).padStart(2,"0")}</span>${l}
-        ${c[k]!==undefined?`<span class="ct">${c[k]}</span>`:""}</a>`;n++});
+      h+=`<a class="${TAB===k?'on':''}" onclick="go('${k}')">${l}
+        ${c[k]!==undefined?`<span class="ct">${c[k]}</span>`:""}</a>`});
   });
   $("nav").innerHTML=h;
   $("foot").innerHTML=`${ROWS.length} analysed · ${UNIV.length} registered`;
@@ -2988,7 +3440,7 @@ function pageLead(){
 
   let h=`<section><div class="eyebrow">Section 1 · The 60-second read</div>
    <h1 class="pg">Summary</h1>
-   <p class="lede">Every box has a number code, and hovering the <span class="infodot" style="vertical-align:-1px">i<span class="tip">Hover any <b>i</b> to see exactly what the number counts and what it is out of. Click any box, bar or step to see the leads behind it.</span></span> tells you exactly what it counts. Click anything to see the leads behind it. Every percentage shows what it is out of, so nothing is guesswork.</p>
+   <p class="lede">Hover any <span class="infodot" style="vertical-align:-1px">i<span class="tip">Tells you exactly what the number counts and what it is out of.</span></span> for the definition. Click anything to see the leads behind it.</p>
    <div class="callout ${bad?'':'ok'}">
      <h4>${bad?"The problem is how we are selling, not the market.":"Calls are holding up well."}</h4>
      <p>${bad?`The average call scores <b>${acq} out of 100</b> across ${sub.length} real conversations.
@@ -3130,9 +3582,7 @@ const STEP_DRILL={3:"S08_NOSHOW_ENGAGED",4:"S10_ATTENDED_NEVER_WORKED",5:"S14_BA
  7:"S16_GOOD_PITCH_NO_NEXT_STEP",8:"S12_REMINDER_ONLY",9:"S11_ATTENDED_NOT_ANALYSED",10:"S13_WRONG_PROGRAM_PITCHED"};
 function pagePlan(){
   let h=`<section><div class="eyebrow">Section 2 · The plan</div><h1 class="pg">Do this next</h1>
-   <p class="lede">In order, not just a list. Each step tells you what to do, why it matters, who does it, by when, and how
-   you will know it worked. Steps with a lead list attached open when you click them. Start with group A — that is the only
-   group where the problem gets bigger while you wait.</p>`;
+   <p class="lede">In order. Start with group A — the only one where the problem grows while you wait.</p>`;
   ["A","B","C","D"].forEach(b=>{
     const [name,col,sub]=BLOCK_META[b];
     h+=`<div style="margin-top:26px;display:flex;align-items:baseline;gap:13px">
@@ -3175,9 +3625,7 @@ function pageScen(){
   const urgent=rows.filter(m=>/24h|48h/.test(m.sla)).reduce((a,m)=>a+m.n,0);
   let h=`<section><div class="eyebrow">Section 3 · Where every lead stands</div>
    <h1 class="pg">Lead states</h1>
-   <p class="lede">Every lead who signed up is in one state only, so the counts always add up to ${tot}. If a lead could
-   fit two states, the one higher up the list wins — someone who said no and also did not attend counts as a no.
-   Click any row to see those leads.</p>
+   <p class="lede">One state per lead, so the counts add up to ${tot}. Click any row for its leads.</p>
    <div class="kpis">
     ${kpi("M01",tot,"everyone who signed up for the webinar","a","drill('Metric M01','Registered base','"+esc(D("M01"))+"',UNIV,'univ')")}
     ${kpi("M02",UNIV.filter(r=>r.cohort==="ATTENDED_ANALYSED").length,`out of ${tot} who signed up`,"g","drill('Group','Came, and calls read','"+esc(D("M02"))+"',UNIV.filter(r=>r.cohort==='ATTENDED_ANALYSED'),'univ')")}
@@ -3471,9 +3919,7 @@ function pagePA(){
   PAROWS=paAgg();
   const cc={URGENT:"hot",HIGH:"warm",MEDIUM:"cool",FINE:"good","No calls yet":""};
   let h=`<section><div class="eyebrow">Section 4 · How the team is doing</div><h1 class="pg">Advisors</h1>
-   <p class="lede">Click any advisor to see all their leads, their three weakest FDE explanations word for word, and
-   anything wrong they told people. Coaching need is based on the call score, not how many calls they made: under 30 is
-   URGENT, under 45 is HIGH, under 60 is MEDIUM.</p>`+filterBar(["pod","temp","call"]);
+   <p class="lede">Click any advisor for their leads and their three weakest FDE explanations, word for word. Coaching need is call score, not call volume.</p>`+filterBar(["pod","temp","call"]);
   h+=tbl([
    {h:"#",f:r=>`<span class="mono mute">${String(PAROWS.indexOf(r)+1).padStart(2,"0")}</span>`},
    {h:"Advisor",f:r=>`<b>${esc(r.pa)}</b>`},{h:"Team",f:r=>`<span class="mute">${esc(r.pod)}</span>`},
@@ -3670,8 +4116,7 @@ function pageVoice(){
       <div class="vn">${rows.length} · ${pct(rows.length,sub.length)}</div></div>`).join("")};
   let h=`<section><div class="eyebrow">Section 6 · In their own words</div>
    <h1 class="pg">What leads said</h1>
-   <p class="lede">Counted across the ${sub.length} real conversations — that is what every percentage here is out of.
-   Use this to write the objection answers for the next webinar and the words for the landing page. Click any bar to read those leads.</p>`
+   <p class="lede">Out of ${sub.length} real conversations. Click any bar to read those leads.</p>`
    +filterBar(["pa","pod","temp"]);
   h+=`<div class="grid" style="grid-template-columns:1fr 1fr">
    <div class="card"><h3>6.1 · What they pushed back on</h3>
@@ -3704,8 +4149,7 @@ let QROWS=[];
 function pageQueue(){
   QROWS=VIEW.slice().sort((a,b)=>b.lead_priority_score-a.lead_priority_score);
   let h=`<section><div class="eyebrow">Section 7 · Tomorrow morning</div><h1 class="pg">Call list</h1>
-   <p class="lede">Best leads at the top. Set the "What to do" filter to <b>RE_PITCH_FDE</b> to see warm leads who got a
-   weak call — that is the quickest money in the file. Click any row to see everything about that lead.</p>`+filterBar(["pa","pod","temp","act","q"]);
+   <p class="lede">Best at the top. Filter "What to do" to <b>RE_PITCH_FDE</b> for warm leads who got a weak call.</p>`+filterBar(["pa","pod","temp","act","q"]);
   h+=tbl([{h:"#",n:1,f:r=>`<span class="mono mute">${QROWS.indexOf(r)+1}</span>`},
    {h:"HubSpot ID",f:r=>`<span class="mono">${esc(r.hubspot_id)}</span>`},
    {h:"Advisor",f:r=>esc(r.pa_name_final)},{h:"POD",f:r=>`<span class="mute">${esc(r.pod_final)}</span>`},
@@ -3753,8 +4197,7 @@ function pageNoShow(){
   window._NS={ns,eng,aband,never,hw,nsAll,dcdRows:ns.filter(r=>num(r.DCD_Flag)===1),
               unan:all.filter(r=>r.cohort==="ATTENDED_UNANALYSED")};
   let h=`<section><div class="eyebrow">Section 8 · Signed up, never came</div><h1 class="pg">No shows</h1>
-   <p class="lede">Not turning up is not the same as not being interested. Work out why first, then use the follow-up that
-   matches. Sending everyone the same "join the next webinar" message is how these lists die. Every box and bar opens its leads.</p>
+   <p class="lede">Not turning up is not the same as not being interested. Diagnose first, then match the follow-up.</p>
    <div class="callout"><h4>Nobody has called ${aband.length} of these ${ns.length} people since the webinar.</h4>
    <p><b>${eng.length}</b> of them spoke to an advisor for five minutes or more before the webinar and still did not come.
    That is a timing or trust problem, not a lack of interest — and they are the easiest calls in the file.
@@ -3978,8 +4421,7 @@ function pageSeg(){
    ["framing_flag","Was FDE explained right"],["next_step_status","Was a next step agreed"],
    ["temperature","How warm"],["action_bucket","What to do"]];
   let h=`<section><div class="eyebrow">Section 9 · Cut it any way you like</div><h1 class="pg">Groups</h1>
-   <p class="lede">Pick how you want to cut the leads. The last column writes its own verdict so you do not have to work it
-   out from the numbers. Every row and bar opens its leads.</p>
+   <p class="lede">Pick how to cut the leads. The last column writes its own verdict.</p>
    <div class="ctl"><label class="f">Cut by</label>
    <select onchange="SEGDIM=this.value;render()">${dims.map(([k,l])=>
      `<option value="${k}" ${SEGDIM===k?"selected":""}>${l}</option>`).join("")}</select>`;
@@ -4032,8 +4474,7 @@ let LROWS=[];
 function pageLeads(){
   LROWS=VIEW.slice().sort((a,b)=>(a.cqs??999)-(b.cqs??999));
   let h=`<section><div class="eyebrow">Section 10 · The evidence</div><h1 class="pg">Every lead</h1>
-   <p class="lede">Worst calls first. Click any row to see everything about that lead. Every quote is taken straight from the
-   call — nothing summarised or reworded.</p>`+filterBar(["pa","pod","temp","act","call","q"]);
+   <p class="lede">Worst calls first. Every quote is straight from the call.</p>`+filterBar(["pa","pod","temp","act","call","q"]);
   h+=tbl([{h:"HubSpot ID",f:r=>`<span class="mono">${esc(r.hubspot_id)}</span>`},
    {h:"Advisor",f:r=>esc(r.pa_name_final)},
    {h:"Type of call",f:r=>`<span class="pill">${S(r.call_type).replace(/_/g," ")}</span>`},
@@ -4455,7 +4896,8 @@ function render(){
   applyFilters();applyNSFilters();renderNav();
   const P={lead:pageLead,webinar:pageWebinar,funnel:pageFunnel,explore:pageExplore,plan:pagePlan,scen:pageScen,coach:pageCoach,org:pageOrg,pa:pagePA,discipline:pageDisc,
    voice:pageVoice,queue:pageQueue,noshow:pageNoShow,noniql:pageNonIQL,upsell:pageUpsell,segments:pageSeg,
-   leads:pageLeads,cover:pageCoverage,trend:pageTrend,upload:pageUpload,data:pageData};
+   leads:pageLeads,analyse:pageCallAnalysis,rec:pageRecordings,
+   cover:pageCoverage,trend:pageTrend,upload:pageUpload,data:pageData};
   $("page").innerHTML=P[TAB]();
   if(TAB==="coach"){const el=$("coachIn");if(el&&COACH_Q){el.focus();el.setSelectionRange(el.value.length,el.value.length)}}
   if(TAB==="upload"){

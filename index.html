@@ -371,6 +371,61 @@ h3.sec{margin:26px 0 4px;font-size:17px;font-weight:700;letter-spacing:-.01em;co
 .nfchip{font-size:11.5px;padding:4px 10px;border-radius:16px;border:1px solid var(--s300);
   background:var(--s0);cursor:pointer;white-space:nowrap}
 .nfchip.on{border-color:var(--amb);background:#FEF6E7;color:#7E5109;font-weight:700}
+.chart{background:#fff;border:1px solid var(--s200);border-radius:var(--r);
+  box-shadow:var(--shadow);padding:16px 18px;margin-bottom:14px;overflow:hidden}
+.chart svg{width:100%;height:auto;display:block;margin-top:4px}
+.chtitle{font-size:15px;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
+.chnote{font-size:12.5px;color:var(--mute);margin-top:3px;line-height:1.5}
+.clab{font-size:12px;fill:var(--body);font-family:Calibri,Carlito,sans-serif}
+.cval{font-size:12px;font-weight:700;fill:var(--ink);font-family:Calibri,Carlito,sans-serif}
+.cmut{font-size:11px;fill:var(--faint);font-family:Calibri,Carlito,sans-serif}
+.chot{font-size:11.5px;font-weight:700;fill:#fff;font-family:Calibri,Carlito,sans-serif}
+.closs{font-size:11px;font-weight:700;fill:#C0392B;font-family:Calibri,Carlito,sans-serif}
+.cbig{font-size:23px;font-weight:700;fill:var(--navy);font-family:Calibri,Carlito,sans-serif}
+.ctm{font-size:12px;font-weight:700;fill:#fff;font-family:Calibri,Carlito,sans-serif}
+.ctmv{font-size:11px;fill:rgba(255,255,255,.85);font-family:Calibri,Carlito,sans-serif}
+.cax{stroke:var(--s300);stroke-width:1}
+.cgrid{stroke:var(--s200);stroke-width:1;stroke-dasharray:3 3}
+.cbench{stroke:#C0392B;stroke-width:1.5;stroke-dasharray:5 4}
+.ctarget{stroke:var(--navy);stroke-width:2.5}
+.gfbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 26px;
+  background:var(--s50);border-bottom:1px solid var(--s200);position:sticky;top:47px;z-index:26}
+.gfbtn{font-size:12.5px;font-weight:700;padding:5px 13px;border-radius:7px;border:1px solid var(--s300);
+  background:#fff;cursor:pointer}
+.gfbtn.on{border-color:var(--cy);background:var(--cy-l);color:var(--navy)}
+.gfchip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:16px;
+  background:var(--cy-l);border:1px solid var(--cy);color:var(--navy);cursor:pointer;white-space:nowrap}
+.gfchip b{font-weight:700}
+.gfchip i{font-style:normal;opacity:.6;font-weight:700}
+.gfchip:hover i{opacity:1;color:var(--red)}
+.gfclear{font-size:11.5px}
+.gfcount{margin-left:auto;font-size:12px;color:var(--mute);font-weight:700;white-space:nowrap}
+.gfpanel{display:flex;gap:14px;flex-wrap:wrap;padding:14px 26px;background:#fff;
+  border-bottom:1px solid var(--s200);position:sticky;top:88px;z-index:25}
+.gffield{display:flex;flex-direction:column;gap:4px}
+.gffield select{min-width:150px}
+.qjbtn{display:inline-flex;align-items:center;gap:7px;font-size:12px}
+.qjbtn kbd{font-family:'IBM Plex Mono',monospace;font-size:10px;background:var(--s100);
+  border:1px solid var(--s300);border-radius:4px;padding:1px 5px}
+.qjscrim{position:fixed;inset:0;background:rgba(11,37,69,.4);z-index:120}
+.qjbox{position:fixed;top:14vh;left:50%;transform:translateX(-50%);width:min(520px,92vw);
+  background:#fff;border-radius:12px;box-shadow:0 24px 70px rgba(8,25,43,.35);z-index:121;overflow:hidden}
+.qjbox input{width:100%;border:none;border-bottom:1px solid var(--s200);border-radius:0;
+  font-size:15px;padding:15px 18px;outline:none}
+.qjlist{max-height:340px;overflow:auto}
+.qjitem{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 18px;
+  cursor:pointer;font-size:13.5px;border-bottom:1px solid var(--s100)}
+.qjitem:hover,.qjitem.first{background:var(--cy-l)}
+.qjgrp{font-size:10.5px;color:var(--faint);font-weight:700;letter-spacing:.04em}
+.qjhint{padding:9px 18px;font-size:11px;color:var(--faint);background:var(--s50)}
+body.dense .kpi{padding:10px 12px}
+body.dense .kpi .val{font-size:24px;margin-top:5px}
+body.dense .card{padding:13px 14px}
+body.dense td{padding:5px 9px}
+body.dense th{padding:5px 9px}
+body.dense .page{padding:16px 26px 60px}
+body.dense h3.sec{margin:18px 0 3px;font-size:15px}
+body.dense p.lede{font-size:13px;margin-bottom:12px}
 .hide{display:none!important}
 @media(max-width:1080px){aside.side{display:none}.wrap{padding:18px 15px 80px}
   .hbar .nm{width:130px}.fnrow .lb{width:150px}}
@@ -386,6 +441,7 @@ h3.sec{margin:26px 0 4px;font-size:17px;font-weight:700;letter-spacing:-.01em;co
   <main>
     <div class="topbar">
       <span class="eyebrow" id="srcChip">Loaded · 29 Jul webinar</span>
+      <button class="gh qjbtn" onclick="qjOpen()">Jump to… <kbd>⌘K</kbd></button>
       <span id="wbPick"></span>
       <span id="nfChip"></span>
       <button class="gh" style="padding:4px 11px;font-size:12px" onclick="go('master')">All leads</button>
@@ -3495,11 +3551,7 @@ function wbCurrent(){
   const tot = sel.reduce((a,w)=>({registered:a.registered+w.registered}),{registered:0});
   return {date:"multi", label:sel.map(w=>w.label).join(" + "), registered:tot.registered};
 }
-function wbApply(){
-  const labels = new Set(wbSelected().map(w => w.label));
-  UNIV = ALLUNIV.filter(r => labels.has(S(r.webinar_batch)) && fitOK(r));
-  applyFilters(); applyNSFilters(); render();
-}
+function wbApply(){ gfApply() }
 function wbToggle(date){
   if(WBSEL.has(date)) WBSEL.delete(date); else WBSEL.add(date);
   wbApply();
@@ -5007,12 +5059,625 @@ function leadFull(id){
   drawerRaw("Full record", id, `Everything known about this lead, from every source.`, b);
 }
 
+/* ============ CHARTS ============
+   Hand-rolled SVG. The file has to stay self-contained, so no chart library.
+   Chart choice follows the rule that fits the question, not the habit:
+   comparison → bar, trend → line, composition → treemap or stacked,
+   relationship → scatter, variance → waterfall, timeline → gantt,
+   part-to-whole → donut but only under five slices.                        */
+
+const PAL = ["#00A9CE","#0B2545","#1E8449","#B9770E","#5B4B9E","#C0392B",
+             "#17A2B8","#6C7A89","#2E86C1","#8E44AD","#16A085","#D35400"];
+const cq = s => S(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const fmtN = n => (Math.round(n*10)/10).toLocaleString();
+
+function chartFrame(title, note, body, w, h){
+  return `<div class="chart">
+    ${title?`<div class="chtitle">${cq(title)}</div>`:""}
+    ${note?`<div class="chnote">${cq(note)}</div>`:""}
+    <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" role="img">${body}</svg>
+  </div>`;
+}
+
+/* Ranking. Horizontal, because labels are words and words read left to right. */
+function barRank(data, opts){
+  opts = opts || {};
+  const d = data.slice(0, opts.top || 12);
+  if(!d.length) return "";
+  const W = 720, rowH = 30, padL = opts.labelW || 190, padR = 70;
+  const H = d.length * rowH + 16;
+  const mx = Math.max(...d.map(x => x.v), 1);
+  let b = "";
+  d.forEach((x, i) => {
+    const y = i * rowH + 8, bw = Math.max((x.v / mx) * (W - padL - padR), 1);
+    const col = x.color || PAL[0];
+    b += `<text x="${padL-9}" y="${y+15}" text-anchor="end" class="clab">${cq(x.k).slice(0,32)}</text>
+      <rect x="${padL}" y="${y+3}" width="${bw}" height="17" rx="3" fill="${col}"/>
+      ${x.v2!=null?`<rect x="${padL}" y="${y+3}" width="${Math.max(x.v2/mx*(W-padL-padR),1)}" height="17" rx="3" fill="${col}" opacity=".35"/>`:""}
+      <text x="${padL+bw+7}" y="${y+16}" class="cval">${fmtN(x.v)}${x.sub?` <tspan class="cmut">${cq(x.sub)}</tspan>`:""}</text>`;
+  });
+  return chartFrame(opts.title, opts.note, b, W, H);
+}
+
+/* Part to whole. Only worth a donut under five slices; above that it becomes
+   a guessing game and a ranked bar is honest. */
+function donut(data, opts){
+  opts = opts || {};
+  const d = data.filter(x => x.v > 0);
+  if(!d.length) return "";
+  if(d.length > 4) return barRank(d, {...opts, note: (opts.note?opts.note+" ":"") + "Shown as a ranked bar rather than a pie — above four slices a pie cannot be read accurately."});
+  const W = 420, H = 210, cx = 105, cy = 105, r = 78, ir = 47;
+  const tot = d.reduce((a, x) => a + x.v, 0) || 1;
+  let ang = -Math.PI / 2, b = "";
+  d.forEach((x, i) => {
+    const sweep = (x.v / tot) * Math.PI * 2, end = ang + sweep;
+    const p = (rr, a) => [cx + rr*Math.cos(a), cy + rr*Math.sin(a)].map(v=>v.toFixed(1)).join(" ");
+    const large = sweep > Math.PI ? 1 : 0;
+    b += `<path d="M ${p(r,ang)} A ${r} ${r} 0 ${large} 1 ${p(r,end)} L ${p(ir,end)} A ${ir} ${ir} 0 ${large} 0 ${p(ir,ang)} Z"
+      fill="${x.color||PAL[i%PAL.length]}"/>`;
+    ang = end;
+  });
+  b += `<text x="${cx}" y="${cy-2}" text-anchor="middle" class="cbig">${fmtN(tot)}</text>
+        <text x="${cx}" y="${cy+16}" text-anchor="middle" class="cmut">${cq(opts.unit||"total")}</text>`;
+  d.forEach((x, i) => {
+    const y = 34 + i * 26;
+    b += `<rect x="228" y="${y-9}" width="11" height="11" rx="2" fill="${x.color||PAL[i%PAL.length]}"/>
+      <text x="246" y="${y}" class="clab">${cq(x.k).slice(0,22)}</text>
+      <text x="${W-14}" y="${y}" text-anchor="end" class="cval">${fmtN(x.v)} · ${(x.v/tot*100).toFixed(0)}%</text>`;
+  });
+  return chartFrame(opts.title, opts.note, b, W, H);
+}
+
+/* Where a funnel loses people, and how much. Waterfall, because the question
+   is variance between steps rather than the level at each step. */
+function waterfall(steps, opts){
+  opts = opts || {};
+  if(steps.length < 2) return "";
+  const W = 760, H = 300, padL = 46, padB = 78, padT = 18;
+  const mx = Math.max(...steps.map(s => s.v), 1);
+  const bw = (W - padL - 20) / steps.length - 12;
+  const y = v => padT + (1 - v / mx) * (H - padT - padB);
+  let b = "";
+  steps.forEach((s, i) => {
+    const x = padL + i * ((W - padL - 20) / steps.length);
+    const top = y(s.v), h = H - padB - top;
+    b += `<rect x="${x}" y="${top}" width="${bw}" height="${Math.max(h,1)}" rx="3" fill="${PAL[0]}" opacity="${1-i*0.06}"/>
+      <text x="${x+bw/2}" y="${top-6}" text-anchor="middle" class="cval">${fmtN(s.v)}</text>`;
+    if(i > 0){
+      const lost = steps[i-1].v - s.v;
+      if(lost > 0){
+        const py = y(steps[i-1].v);
+        b += `<rect x="${x}" y="${py}" width="${bw}" height="${Math.max(top-py,1)}" rx="3" fill="#C0392B" opacity=".16"/>
+          <text x="${x+bw/2}" y="${py+Math.max((top-py)/2,7)+4}" text-anchor="middle" class="closs">-${fmtN(lost)}</text>`;
+      }
+    }
+    const words = cq(s.k).split(" ");
+    let line = "", lines = [];
+    words.forEach(w => { if((line+" "+w).length > 15){ lines.push(line); line = w } else line = line ? line+" "+w : w });
+    lines.push(line);
+    lines.slice(0,3).forEach((l, li) => {
+      b += `<text x="${x+bw/2}" y="${H-padB+16+li*12}" text-anchor="middle" class="cmut">${l}</text>`;
+    });
+  });
+  return chartFrame(opts.title, opts.note, b, W, H);
+}
+
+/* Relationship. Volume against quality is the classic advisor question and a
+   scatter is the only chart that answers it. */
+function scatter(pts, opts){
+  opts = opts || {};
+  if(!pts.length) return "";
+  const W = 700, H = 400, padL = 58, padB = 52, padT = 20, padR = 22;
+  const xs = pts.map(p=>p.x), ys = pts.map(p=>p.y);
+  const x0 = 0, x1 = Math.max(...xs, 1) * 1.08;
+  const y0 = 0, y1 = Math.max(...ys, 1) * 1.08;
+  const X = v => padL + (v - x0) / (x1 - x0) * (W - padL - padR);
+  const Y = v => H - padB - (v - y0) / (y1 - y0) * (H - padT - padB);
+  let b = `<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H-padB}" class="cax"/>
+           <line x1="${padL}" y1="${H-padB}" x2="${W-padR}" y2="${H-padB}" class="cax"/>`;
+  for(let i=0;i<=4;i++){
+    const gy = padT + i*(H-padT-padB)/4, gv = y1 - i*(y1-y0)/4;
+    b += `<line x1="${padL}" y1="${gy}" x2="${W-padR}" y2="${gy}" class="cgrid"/>
+          <text x="${padL-8}" y="${gy+4}" text-anchor="end" class="cmut">${fmtN(gv)}</text>`;
+  }
+  if(opts.yBand!=null){
+    b += `<line x1="${padL}" y1="${Y(opts.yBand)}" x2="${W-padR}" y2="${Y(opts.yBand)}" class="cbench"/>
+          <text x="${W-padR}" y="${Y(opts.yBand)-6}" text-anchor="end" class="cmut">${cq(opts.bandLabel||"benchmark")}</text>`;
+  }
+  pts.forEach(p => {
+    const r = p.r ? Math.max(4, Math.min(18, p.r)) : 6;
+    b += `<circle cx="${X(p.x)}" cy="${Y(p.y)}" r="${r}" fill="${p.color||PAL[0]}" opacity=".72"/>`;
+    if(p.label) b += `<text x="${X(p.x)}" y="${Y(p.y)-r-4}" text-anchor="middle" class="cmut">${cq(p.label).slice(0,18)}</text>`;
+  });
+  b += `<text x="${(W+padL)/2}" y="${H-10}" text-anchor="middle" class="cmut">${cq(opts.xLabel||"")}</text>
+        <text x="14" y="${(H-padB+padT)/2}" text-anchor="middle" class="cmut" transform="rotate(-90 14 ${(H-padB+padT)/2})">${cq(opts.yLabel||"")}</text>`;
+  return chartFrame(opts.title, opts.note, b, W, H);
+}
+
+/* Matrix. Two dimensions at once, which a pair of bars cannot do. */
+function heatmap(rowsK, colsK, get, opts){
+  opts = opts || {};
+  if(!rowsK.length || !colsK.length) return "";
+  const cw = 74, ch = 30, padL = opts.labelW || 190, padT = 58;
+  const W = padL + colsK.length * cw + 16, H = padT + rowsK.length * ch + 14;
+  let mx = 0; rowsK.forEach(r => colsK.forEach(c => { mx = Math.max(mx, get(r, c) || 0) }));
+  let b = "";
+  colsK.forEach((c, j) => {
+    const x = padL + j * cw + cw/2;
+    b += `<text x="${x}" y="${padT-10}" text-anchor="middle" class="cmut" transform="rotate(-28 ${x} ${padT-10})">${cq(c).slice(0,16)}</text>`;
+  });
+  rowsK.forEach((r, i) => {
+    const y = padT + i * ch;
+    b += `<text x="${padL-9}" y="${y+19}" text-anchor="end" class="clab">${cq(r).slice(0,30)}</text>`;
+    colsK.forEach((c, j) => {
+      const v = get(r, c) || 0, t = mx ? v / mx : 0;
+      const x = padL + j * cw;
+      b += `<rect x="${x+1}" y="${y+2}" width="${cw-3}" height="${ch-4}" rx="3"
+        fill="${PAL[0]}" opacity="${(0.08 + t*0.85).toFixed(2)}"/>
+        ${v?`<text x="${x+cw/2}" y="${y+19}" text-anchor="middle" class="${t>0.55?"chot":"clab"}">${fmtN(v)}</text>`:""}`;
+    });
+  });
+  return chartFrame(opts.title, opts.note, b, W, H);
+}
+
+/* Timeline. What ran when, and for how long. */
+function gantt(tasks, opts){
+  opts = opts || {};
+  if(!tasks.length) return "";
+  const days = tasks.flatMap(t => [new Date(t.start).getTime(), new Date(t.end).getTime()]).filter(v=>!isNaN(v));
+  if(!days.length) return "";
+  const t0 = Math.min(...days), t1 = Math.max(...days) || t0 + 864e5;
+  const W = 760, rowH = 32, padL = opts.labelW || 210, padT = 40;
+  const H = padT + tasks.length * rowH + 14;
+  const X = t => padL + (t - t0) / Math.max(t1 - t0, 1) * (W - padL - 24);
+  let b = "";
+  const span = (t1 - t0) / 864e5;
+  const ticks = Math.min(8, Math.max(2, Math.round(span / 3)));
+  for(let i = 0; i <= ticks; i++){
+    const t = t0 + (t1 - t0) * i / ticks, x = X(t);
+    b += `<line x1="${x}" y1="${padT-8}" x2="${x}" y2="${H-8}" class="cgrid"/>
+      <text x="${x}" y="${padT-14}" text-anchor="middle" class="cmut">${new Date(t).toLocaleDateString([], {day:"2-digit",month:"short"})}</text>`;
+  }
+  tasks.forEach((t, i) => {
+    const y = padT + i * rowH;
+    const a = X(new Date(t.start).getTime()), z = X(new Date(t.end).getTime());
+    b += `<text x="${padL-9}" y="${y+20}" text-anchor="end" class="clab">${cq(t.k).slice(0,34)}</text>
+      <rect x="${a}" y="${y+6}" width="${Math.max(z-a,4)}" height="18" rx="4" fill="${t.color||PAL[i%PAL.length]}" opacity=".9"/>
+      ${t.pct!=null?`<rect x="${a}" y="${y+6}" width="${Math.max((z-a)*t.pct,2)}" height="18" rx="4" fill="${t.color||PAL[i%PAL.length]}"/>`:""}
+      ${t.note?`<text x="${z+7}" y="${y+19}" class="cmut">${cq(t.note).slice(0,26)}</text>`:""}`;
+  });
+  return chartFrame(opts.title, opts.note, b, W, H);
+}
+
+/* Progress against a target. A bullet says "how far" without a gauge's
+   wasted ink. */
+function bullet(rows, opts){
+  opts = opts || {};
+  if(!rows.length) return "";
+  const W = 700, rowH = 42, padL = opts.labelW || 210;
+  const H = rows.length * rowH + 12;
+  const mx = Math.max(...rows.map(r => Math.max(r.v, r.target || 0)), 1);
+  let b = "";
+  rows.forEach((r, i) => {
+    const y = i * rowH + 10, tw = W - padL - 96;
+    const vw = Math.max(r.v / mx * tw, 1);
+    const good = r.target ? r.v >= r.target : true;
+    b += `<text x="${padL-9}" y="${y+16}" text-anchor="end" class="clab">${cq(r.k).slice(0,34)}</text>
+      <rect x="${padL}" y="${y+4}" width="${tw}" height="20" rx="4" fill="#EDF1F5"/>
+      <rect x="${padL}" y="${y+4}" width="${vw}" height="20" rx="4" fill="${good?"#1E8449":"#B9770E"}"/>
+      ${r.target?`<line x1="${padL + r.target/mx*tw}" y1="${y+1}" x2="${padL + r.target/mx*tw}" y2="${y+27}" class="ctarget"/>`:""}
+      <text x="${W-88}" y="${y+19}" class="cval">${fmtN(r.v)}${r.suffix||""}</text>
+      ${r.target?`<text x="${W-8}" y="${y+19}" text-anchor="end" class="cmut">target ${fmtN(r.target)}${r.suffix||""}</text>`:""}`;
+  });
+  return chartFrame(opts.title, opts.note, b, W, H);
+}
+
+/* Composition where the categories are many and unequal. */
+function treemap(data, opts){
+  opts = opts || {};
+  const d = data.filter(x => x.v > 0).sort((a,b) => b.v - a.v).slice(0, 14);
+  if(!d.length) return "";
+  const W = 720, H = 320, tot = d.reduce((a,x) => a + x.v, 0) || 1;
+  let x = 0, y = 0, rowH = 0, b = "";
+  // simple shelf layout: good enough to read, and it never lies about area order
+  let remaining = [...d], rowW = 0, row = [];
+  const flush = () => {
+    if(!row.length) return;
+    const rTot = row.reduce((a,i)=>a+i.v,0);
+    const h = (rTot / tot) * H;
+    let cx = 0;
+    row.forEach((it, i) => {
+      const w = (it.v / rTot) * W;
+      b += `<rect x="${cx+1}" y="${y+1}" width="${Math.max(w-2,1)}" height="${Math.max(h-2,1)}" rx="3"
+        fill="${PAL[(d.indexOf(it))%PAL.length]}" opacity=".88"/>`;
+      if(w > 58 && h > 30){
+        b += `<text x="${cx+8}" y="${y+19}" class="ctm">${cq(it.k).slice(0, Math.floor(w/7))}</text>
+              <text x="${cx+8}" y="${y+35}" class="ctmv">${fmtN(it.v)}</text>`;
+      }
+      cx += w;
+    });
+    y += h; row = [];
+  };
+  const target = Math.max(tot / 4.2, 1);
+  remaining.forEach(it => { row.push(it);
+    if(row.reduce((a,i)=>a+i.v,0) >= target) flush() });
+  flush();
+  return chartFrame(opts.title, opts.note, b, W, H);
+}
+
+/* Trend. Only ever a line. */
+function lineChart(series, opts){
+  opts = opts || {};
+  if(!series.length || !series[0].pts.length) return "";
+  const W = 720, H = 280, padL = 52, padB = 46, padT = 18, padR = 20;
+  const allY = series.flatMap(s => s.pts.map(p => p.y));
+  const y1 = Math.max(...allY, 1) * 1.1, y0 = 0;
+  const n = series[0].pts.length;
+  const X = i => padL + (n===1?0.5:i/(n-1)) * (W - padL - padR);
+  const Y = v => H - padB - (v - y0) / (y1 - y0) * (H - padT - padB);
+  let b = "";
+  for(let i=0;i<=4;i++){
+    const gy = padT + i*(H-padT-padB)/4;
+    b += `<line x1="${padL}" y1="${gy}" x2="${W-padR}" y2="${gy}" class="cgrid"/>
+      <text x="${padL-8}" y="${gy+4}" text-anchor="end" class="cmut">${fmtN(y1 - i*(y1-y0)/4)}</text>`;
+  }
+  series.forEach((s, si) => {
+    const col = s.color || PAL[si % PAL.length];
+    const path = s.pts.map((p, i) => `${i?"L":"M"} ${X(i).toFixed(1)} ${Y(p.y).toFixed(1)}`).join(" ");
+    b += `<path d="${path}" fill="none" stroke="${col}" stroke-width="2.4" stroke-linejoin="round"/>`;
+    s.pts.forEach((p, i) => { b += `<circle cx="${X(i)}" cy="${Y(p.y)}" r="4" fill="${col}"/>` });
+    b += `<rect x="${padL + si*140}" y="4" width="10" height="10" rx="2" fill="${col}"/>
+          <text x="${padL + si*140 + 15}" y="13" class="cmut">${cq(s.k)}</text>`;
+  });
+  series[0].pts.forEach((p, i) => {
+    b += `<text x="${X(i)}" y="${H-padB+18}" text-anchor="middle" class="cmut">${cq(p.x).slice(0,12)}</text>`;
+  });
+  return chartFrame(opts.title, opts.note, b, W, H);
+}
+
+/* Composition across a handful of groups. */
+function stackedBar(groups, keys, opts){
+  opts = opts || {};
+  if(!groups.length) return "";
+  const W = 720, H = 60 + groups.length * 44, padL = opts.labelW || 170;
+  let b = "";
+  const mx = Math.max(...groups.map(g => keys.reduce((a,k) => a + (g.v[k]||0), 0)), 1);
+  groups.forEach((g, i) => {
+    const y = 42 + i * 44, tot = keys.reduce((a,k) => a + (g.v[k]||0), 0);
+    let x = padL;
+    b += `<text x="${padL-9}" y="${y+18}" text-anchor="end" class="clab">${cq(g.k).slice(0,28)}</text>`;
+    keys.forEach((k, ki) => {
+      const w = (g.v[k]||0) / mx * (W - padL - 60);
+      if(w > 0){
+        b += `<rect x="${x}" y="${y+3}" width="${w}" height="22" fill="${PAL[ki%PAL.length]}"/>`;
+        if(w > 30) b += `<text x="${x+w/2}" y="${y+18}" text-anchor="middle" class="chot">${fmtN(g.v[k])}</text>`;
+        x += w;
+      }
+    });
+    b += `<text x="${W-52}" y="${y+18}" class="cval">${fmtN(tot)}</text>`;
+  });
+  keys.forEach((k, ki) => {
+    b += `<rect x="${padL + ki*130}" y="8" width="10" height="10" rx="2" fill="${PAL[ki%PAL.length]}"/>
+          <text x="${padL + ki*130 + 15}" y="17" class="cmut">${cq(k).slice(0,16)}</text>`;
+  });
+  return chartFrame(opts.title, opts.note, b, W, H);
+}
+
+/* ============ INSIGHTS — the executive read ============
+   Structured the way a partner deck is: headline, funnel and where it leaks,
+   what drives it, who is doing it, and what to do. Every chart is chosen for
+   the question rather than the habit.                                       */
+
+function pageInsights(){
+  if(!UNIV.length) return noDB("Insights");
+  const R = UNIV, n = R.length;
+  const att   = R.filter(r => num(r.attended_live) === 1);
+  const later = R.filter(r => num(r.attended_later) === 1);
+  const reach = R.filter(r => num(r.Reached) > 0);
+  const conn  = R.filter(r => num(r.Connected) > 0);
+  const dcd   = R.filter(r => num(r.DCD_Flag) > 0);
+  const rte   = R.filter(r => num(r.RTE_Flag) > 0);
+  const B     = buyers(R);
+  const ids   = new Set(ROWS.map(r => String(r.hubspot_id)));
+  const read  = R.filter(r => ids.has(String(r.hubspot_id)));
+  const sub   = ROWS.filter(r => r.call_type === "SUBSTANTIVE_CONVERSATION");
+  const showRate = n ? att.length / n : 0;
+  const cqs = avg(sub.map(r => r.cqs).filter(v => v != null));
+  const w = wbCurrent();
+
+  const by = (rows, k) => { const c = {}; rows.forEach(r => { const v = S(r[k]) || "(not set)"; c[v] = (c[v]||0)+1 }); return c };
+  const rank = (obj, extra) => Object.entries(obj).sort((a,b)=>b[1]-a[1])
+    .map(([k,v]) => ({k, v, sub: extra ? extra(k, v) : ""}));
+
+  let h = `<section><h1 class="pg">Insights</h1>
+   <p class="lede">The whole picture for <b>${esc((w||{}).label || "this webinar")}</b> — ${n} leads.
+   Read top to bottom: what happened, where it leaks, what drives it, who is doing it, what to do.</p>`;
+
+  /* ---- 1. headline ---- */
+  h += `<h3 class="sec" style="margin-top:0">The headline</h3>
+   <div class="kpis">
+     ${kpi_raw("I1","Leads",n,`across ${Object.keys(by(R,"channel")).length} channels`,"a")}
+     ${kpi_raw("I2","Turned up",att.length,`${(showRate*100).toFixed(0)}% show rate`,showRate>=.5?"g":"w")}
+     ${kpi_raw("I3","Discovery calls",dcd.length,`${pct(dcd.length,n)} of leads`,"a")}
+     ${kpi_raw("I4","Ready to enrol",rte.length,`${pct(rte.length,n)} of leads`,"a")}
+     ${kpi_raw("I5","Bought FDE",B.fde.length,`${pct(B.fde.length,n)} of leads`,B.fde.length?"g":"r")}
+     ${kpi_raw("I6","Average call score",cqs??"—",`from ${sub.length} real conversations`,(cqs||0)<45?"r":"w")}
+   </div>`;
+
+  /* ---- 2. funnel and where it leaks ---- */
+  const steps = [
+    {k:"Leads generated", v:n},
+    {k:"Reached", v:reach.length},
+    {k:"Connected", v:conn.length},
+    {k:"Attended", v:att.length},
+    {k:"Discovery call", v:dcd.length},
+    {k:"Ready to enrol", v:rte.length},
+    {k:"Bought", v:B.withDate.length},
+  ];
+  let worst = {drop:0, from:"", to:""};
+  for(let i=1;i<steps.length;i++){
+    const d = steps[i-1].v - steps[i].v;
+    if(d > worst.drop) worst = {drop:d, from:steps[i-1].k, to:steps[i].k};
+  }
+  h += `<h3 class="sec">Where it leaks</h3>
+   <p class="lede">A waterfall rather than a funnel, because the question is how many are lost between steps,
+   not how many survive each one. The red block is the loss.</p>
+   ${waterfall(steps, {note:`Biggest single loss: ${worst.drop} leads between ${worst.from} and ${worst.to}.`})}
+   <div class="callout"><h4>The biggest leak is ${worst.from} → ${worst.to}</h4>
+     <p><b>${worst.drop} leads</b> disappear at that step, ${pct(worst.drop, n)} of everyone.
+     ${worst.to === "Connected" ? "They pick up but nothing lands. That is a script problem, not a lead problem."
+      : worst.to === "Attended" ? "They agreed to come and did not. Reminder timing and the reason to attend are the levers."
+      : worst.to === "Discovery call" ? "They came to the webinar and never had a real conversation. This is the cheapest leak to fix."
+      : worst.to === "Bought" ? "Intent exists and does not convert. The close is the problem."
+      : "Worth a closer look at that step."}</p></div>`;
+
+  /* ---- 3. what drives it ---- */
+  const chByShow = Object.entries(by(R,"channel")).map(([k, v]) => {
+    const g = R.filter(r => S(r.channel) === k);
+    const a = g.filter(r => num(r.attended_live) === 1).length;
+    return {k, v: a, target: Math.round(v * showRate), suffix:"", leads:v, rate: v ? a/v : 0};
+  }).filter(x => x.leads >= 5).sort((a,b) => b.leads - a.leads);
+  h += `<h3 class="sec">What drives it</h3>
+   <p class="lede">Attendance by channel against what that channel would deliver at the overall show rate.
+   The marker is the expectation; the bar is reality. Green beats it, amber misses.</p>
+   ${bullet(chByShow, {title:"Attendance against expectation, by channel",
+     note:`Overall show rate is ${(showRate*100).toFixed(0)}%. Channels with fewer than five leads are left out.`})}`;
+
+  const chan = rank(by(R,"channel"));
+  h += `<div class="grid" style="grid-template-columns:1fr 1fr">
+    <div>${donut(chan.slice(0,4).map((c,i)=>({...c,color:PAL[i]})), {title:"Where the leads come from", unit:"leads",
+      note: chan.length>4 ? `Top four of ${chan.length} channels.` : ""})}</div>
+    <div>${donut(rank(by(R,"interview_start_time")).slice(0,4), {title:"When they want to interview", unit:"leads",
+      note:"The strongest buying-intent field in the file."})}</div>
+  </div>`;
+
+  /* ---- 4. who they are ---- */
+  const roles = rank(by(R,"role_domain"));
+  const exps  = ["0-2","2-5","5-8","9-15","16-20","20+"].filter(e => R.some(r => S(r.work_ex) === e));
+  const topRoles = roles.slice(0, 8).map(r => r.k);
+  h += `<h3 class="sec">Who they are</h3>
+   <p class="lede">Role against experience, in one grid. Two dimensions at once is the only way to see where
+   the audience actually sits.</p>
+   ${heatmap(topRoles, exps, (ro, ex) => R.filter(r => S(r.role_domain)===ro && S(r.work_ex)===ex).length,
+     {title:"Leads by role and experience", note:"Darker is more. Top eight roles."})}
+   ${treemap(roles, {title:"The whole role mix", note:"Area is share of leads. Ordered largest first."})}`;
+
+  /* ---- 5. who is working it ---- */
+  const paRows = Object.entries(by(R,"pa_name_final")).filter(([,v]) => v >= 4).map(([k, v]) => {
+    const g = R.filter(r => S(r.pa_name_final) === k);
+    const gc = ROWS.filter(r => S(r.pa_name_final) === k && r.call_type === "SUBSTANTIVE_CONVERSATION");
+    const sc = avg(gc.map(r => r.cqs).filter(x => x != null));
+    return {x: v, y: sc ?? 0, r: Math.sqrt(sumOf(g,"total_tt"))/2.2, label: k.split(" ")[0],
+            color: (sc||0) < 40 ? "#C0392B" : (sc||0) > 55 ? "#1E8449" : PAL[0], leads: v, cqs: sc};
+  }).filter(p => p.y > 0);
+  if(paRows.length){
+    h += `<h3 class="sec">Who is working it</h3>
+     <p class="lede">Book size against call quality. Bubble size is minutes on the phone. Bottom-right is the
+     dangerous quadrant — a big book being worked badly.</p>
+     ${scatter(paRows, {xLabel:"Leads assigned", yLabel:"Average call score", yBand: cqs,
+       bandLabel:"average across everyone",
+       title:"Advisors: volume against quality",
+       note:"Only advisors with four or more leads and at least one scored call."})}`;
+    const risky = paRows.filter(p => p.leads >= 8 && p.cqs < 40);
+    if(risky.length){
+      h += `<div class="callout"><h4>${risky.length} advisor${risky.length===1?"":"s"} hold a real book and score under 40</h4>
+        <p>${risky.map(p=>`<b>${esc(p.label)}</b> (${p.leads} leads, score ${p.cqs})`).join(" · ")}.
+        Coaching them is worth more than any amount of new lead volume.</p></div>`;
+    }
+  }
+
+  /* ---- 6. calling effort over time ---- */
+  const preA = sumOf(R,"pre_webinar_attempt"), posA = sumOf(R,"post_webinar_attempt");
+  const preC = sumOf(R,"pre_webinar_connect"), posC = sumOf(R,"post_webinar_connect");
+  h += `<h3 class="sec">Effort, before and after</h3>
+   <p class="lede">Where the dialling goes. Before the webinar the job is attendance; after it, the job is the sale.</p>
+   ${stackedBar([
+     {k:"Dials", v:{"Before the webinar":preA, "After the webinar":posA}},
+     {k:"Connects", v:{"Before the webinar":preC, "After the webinar":posC}},
+     {k:"Minutes", v:{"Before the webinar":Math.round(sumOf(R,"pre_webinar_tt")), "After the webinar":Math.round(sumOf(R,"post_webinar_tt"))}},
+   ], ["Before the webinar","After the webinar"], {title:"Calling effort either side of the webinar",
+     note: posA < preA/2 ? "Post-webinar effort is less than half of pre-webinar. The push stops at the point interest peaks."
+                         : "Effort is reasonably balanced either side."})}`;
+
+  /* ---- 7. the campaign timeline ---- */
+  const wbs = (typeof WBIDX !== "undefined" ? WBIDX : []);
+  if(wbs.length){
+    const tasks = [];
+    wbs.forEach((x, i) => {
+      const d = new Date(x.date);
+      tasks.push({k:`${x.label} · lead gen`, start:new Date(d.getTime()-9*864e5).toISOString(),
+                  end:x.date, color:PAL[i%PAL.length], pct:1, note:`${x.registered} leads`});
+      tasks.push({k:`${x.label} · the webinar`, start:x.date,
+                  end:new Date(d.getTime()+864e5).toISOString(), color:"#1E8449", pct:1,
+                  note:`${x.attended_live} came`});
+      tasks.push({k:`${x.label} · selling window`, start:x.date,
+                  end:new Date(d.getTime()+21*864e5).toISOString(), color:"#B9770E",
+                  pct: Math.min(1, (Date.now()-d.getTime())/(21*864e5)),
+                  note:`${x.rte} ready to enrol`});
+    });
+    h += `<h3 class="sec">The campaign timeline</h3>
+     <p class="lede">Each webinar as three phases. The filled part of the selling bar is how much of the
+     three-week window has already gone.</p>
+     ${gantt(tasks, {title:"Lead generation, the webinar, and the window to sell",
+       note:"Selling windows are drawn as three weeks — most enrolments land inside that."})}`;
+  }
+
+  /* ---- 8. coverage ---- */
+  h += `<h3 class="sec">What we can actually see</h3>
+   <p class="lede">Every call-quality number on this page describes only the calls that have been read.
+   This is the honest denominator.</p>
+   ${barRank([
+     {k:"Calls read and scored", v:read.length, color:"#1E8449"},
+     {k:"Attended, calls not read", v:att.length - read.filter(r=>num(r.attended_live)===1).length, color:"#B9770E"},
+     {k:"Never attended, not read", v:R.filter(r=>!S(r.attended_on) && !ids.has(String(r.hubspot_id))).length, color:"#C0392B"},
+   ], {title:"Coverage of the call analysis", note:`${read.length} of ${n} leads have been through the prompt.`, labelW:230})}`;
+
+  /* ---- 9. what to do ---- */
+  const noNext = ROWS.filter(r => r.next_step_status === "NOT_DEFINED").length;
+  const noUrg  = ROWS.filter(r => r.urgency_flag === "NONE").length;
+  const hotNoDate = ROWS.filter(r => r.temperature === "HOT" && r.next_step_status !== "DEFINED").length;
+  h += `<h3 class="sec">What the numbers argue for</h3>
+   <div class="card"><div class="sub" style="margin:0;line-height:2">
+     <b style="color:var(--ink)">Attendance is not the problem.</b> ${(showRate*100).toFixed(0)}% turned up, which is
+     healthy for a free webinar. The leak is after it.<br>
+     <b style="color:var(--ink)">The close is the problem.</b> ${noNext} read calls ended with nothing agreed and
+     ${noUrg} gave no reason to act now. ${hotNoDate} hot leads have no date in the diary.<br>
+     <b style="color:var(--ink)">Coverage limits everything above.</b> Only ${read.length} of ${n} leads have had a
+     call read, so every quality number is a sample, not a census.<br>
+     <b style="color:var(--ink)">One channel is carrying the volume.</b> ${chan[0] ? `${esc(chan[0].k)} sent
+     ${chan[0].v} of ${n} leads, ${pct(chan[0].v, n)}. Concentration like that is a risk as much as a result.` : ""}
+   </div></div></section>`;
+  return h;
+}
+
+/* ============ GLOBAL FILTERS + QUICK JUMP ============
+   Taken from how Superset and most BI tools work: a filter set that lives above
+   the page and survives navigation, shown as removable chips so the state is
+   never hidden. Before this, every page filtered on its own and moving pages
+   silently threw the filter away.                                            */
+
+let GF = {};                 // {field: value}
+let GFOPEN = false;
+let DENSE = false;
+
+const GF_FIELDS = [
+  ["channel",              "Channel"],
+  ["UTM_Campaign",         "Campaign"],
+  ["pa_name_final",        "Advisor"],
+  ["pod_final",            "Team"],
+  ["lead_status",          "CRM status"],
+  ["latest_classification","CRM rating"],
+  ["work_ex",              "Experience"],
+  ["role_domain",          "Role"],
+  ["city",                 "City"],
+  ["interview_start_time", "Interview timing"],
+  ["cohort",               "Cohort"],
+  ["fde_fit",              "FDE fit"],
+];
+
+/* The base every page reads. Webinar selection and role fit are applied first,
+   then whatever is in the filter bar. */
+function gfBase(){
+  const labels = new Set(wbSelected().map(w => w.label));
+  return (ALLUNIV.length ? ALLUNIV : UNIV)
+    .filter(r => (!labels.size || labels.has(S(r.webinar_batch))) && fitOK(r));
+}
+function gfApply(){
+  UNIV = gfBase().filter(r => Object.entries(GF).every(([k, v]) => S(r[k]) === v));
+  applyFilters(); applyNSFilters(); render();
+}
+function gfSet(k, v){ if(v) GF[k] = v; else delete GF[k]; gfApply() }
+function gfClear(){ GF = {}; gfApply() }
+function gfToggleOpen(){ GFOPEN = !GFOPEN; render() }
+function gfOpts(k){
+  const c = {};
+  gfBase().forEach(r => { const v = S(r[k]); if(v) c[v] = (c[v]||0)+1 });
+  return Object.entries(c).sort((a,b) => b[1]-a[1]).slice(0, 40);
+}
+function gfCount(){ return Object.keys(GF).length }
+
+function gfBar(){
+  if(!ALLUNIV.length && !UNIV.length) return "";
+  const active = Object.entries(GF);
+  const base = gfBase().length;
+  return `<div class="gfbar">
+    <button class="gfbtn ${gfCount()?"on":""}" onclick="gfToggleOpen()">
+      Filters${gfCount()?` · ${gfCount()}`:""}</button>
+    ${active.map(([k, v]) => {
+      const lab = (GF_FIELDS.find(f => f[0]===k) || [k, k])[1];
+      return `<span class="gfchip" onclick="gfSet('${k}','')">
+        <b>${esc(lab)}</b> ${esc(v)} <i>×</i></span>`;
+    }).join("")}
+    ${active.length ? `<button class="gh gfclear" onclick="gfClear()">clear all</button>` : ""}
+    <span class="gfcount">${UNIV.length}${UNIV.length!==base?` of ${base}`:""} leads</span>
+  </div>
+  ${GFOPEN ? `<div class="gfpanel">
+    ${GF_FIELDS.map(([k, lab]) => {
+      const o = gfOpts(k); if(!o.length) return "";
+      return `<div class="gffield">
+        <label class="f">${esc(lab)}</label>
+        <select onchange="gfSet('${k}',this.value)">
+          <option value="">any</option>
+          ${o.map(([v, n]) => `<option value="${esc(v)}" ${GF[k]===v?"selected":""}>${esc(v)} (${n})</option>`).join("")}
+        </select></div>`;
+    }).join("")}
+    <div class="gffield" style="align-self:flex-end">
+      <button onclick="gfToggleOpen()">Done</button></div>
+  </div>` : ""}`;
+}
+
+/* ---------- quick jump ---------- */
+let QJ = false, QJQ = "";
+function qjOpen(){ QJ = true; QJQ = ""; render(); setTimeout(()=>{ const e=$("qjInput"); if(e)e.focus() }, 30) }
+function qjClose(){ QJ = false; render() }
+function qjList(){
+  const out = [];
+  TABS.forEach(([grp, items]) => items.forEach(([k, l]) => out.push({k, l, grp})));
+  const q = QJQ.toLowerCase();
+  return q ? out.filter(x => (x.l + " " + x.grp).toLowerCase().includes(q)) : out;
+}
+function qjGo(k){ QJ = false; go(k) }
+function qjPanel(){
+  if(!QJ) return "";
+  const items = qjList();
+  return `<div class="qjscrim" onclick="qjClose()"></div>
+  <div class="qjbox">
+    <input id="qjInput" placeholder="Jump to a page…" value="${esc(QJQ)}"
+      oninput="QJQ=this.value;qjRefresh()"
+      onkeydown="if(event.key==='Escape')qjClose();if(event.key==='Enter'){const l=qjList();if(l.length)qjGo(l[0].k)}">
+    <div class="qjlist" id="qjList">${items.map((x, i) => `
+      <div class="qjitem ${i===0?"first":""}" onclick="qjGo('${x.k}')">
+        <span>${esc(x.l)}</span><span class="qjgrp">${esc(x.grp)}</span></div>`).join("")
+      || `<div class="qjitem"><span class="mute">Nothing matches that.</span></div>`}</div>
+    <div class="qjhint">Enter opens the first result · Esc closes</div>
+  </div>`;
+}
+function qjRefresh(){
+  const el = $("qjList"); if(!el) return;
+  const items = qjList();
+  el.innerHTML = items.map((x, i) => `
+    <div class="qjitem ${i===0?"first":""}" onclick="qjGo('${x.k}')">
+      <span>${esc(x.l)}</span><span class="qjgrp">${esc(x.grp)}</span></div>`).join("")
+    || `<div class="qjitem"><span class="mute">Nothing matches that.</span></div>`;
+}
+function toggleDense(){
+  DENSE = !DENSE;
+  document.body.classList[DENSE?"add":"remove"]("dense");
+  try{ localStorage.setItem("cbi:dense", DENSE?"1":"") }catch(e){}
+  render();
+}
+
 /* ============ NAV ============ */
 const TABS=[
- ["THE PICTURE",[["lead","Summary"],["resources","Resources"],["master","All leads"],["notfit","Not a fit"],["jobs","FDE jobs"],["webinars","Webinars"],["webinar","Webinar view"],["campaigns","Where leads come from"],["t500","Talent 500"],["calling","Calling effort"],["funnel","Funnel"],["explore","Explore"],["plan","Do this next"],["scen","Lead states"]]],
- ["THE TEAM",[["coach","PA coach"],["org","FDE org chart"],["pa","Advisors"],["discipline","Wrong info given"],["voice","What leads said"]]],
- ["THE LEADS",[["queue","Call list"],["noshow","No shows"],["noniql","Non-IQL leads"],["upsell","Existing students"],["segments","Groups"],["leads","Every lead"]]],
- ["KEEP IT FRESH",[["analyse","Call analysis"],["rec","Recordings"],["cover","Coverage & uploads"],["audit","What changed"],["trend","Track progress"],["upload","Upload data"]]],
+ ["OVERVIEW",[["lead","Summary"],["insights","Insights"],["webinars","Webinars"],["webinar","Webinar view"]]],
+ ["MARKETING",[["campaigns","Where leads come from"],["t500","Talent 500"],["jobs","FDE jobs"],["org","FDE org chart"]]],
+ ["SALES",[["calling","Calling effort"],["plan","Do this next"],["queue","Call list"],["pa","Advisors"],
+           ["coach","PA coach"],["discipline","Wrong info given"],["voice","What leads said"]]],
+ ["LEADS",[["master","All leads"],["explore","Explore"],["scen","Lead states"],["funnel","Funnel"],
+           ["noshow","No shows"],["upsell","Existing students"],["segments","Groups"],
+           ["notfit","Not a fit"],["noniql","Non-IQL leads"],["leads","Every lead"]]],
+ ["WORKSPACE",[["resources","Resources"],["analyse","Call analysis"],["rec","Recordings"]]],
+ ["DATA",[["cover","Coverage & uploads"],["audit","What changed"],["trend","Track progress"],["upload","Upload data"]]],
 ];
 const TABCOUNT=()=>({
  queue:VIEW.length, noshow:UNIV.filter(r=>r.cohort==="NO_SHOW").length,
@@ -5021,7 +5686,7 @@ const TABCOUNT=()=>({
  noniql:NONIQL.length, coach:CARDS.length,
  explore:UNIV.length, webinar:UNIV.length, webinars:WBIDX.length,
  campaigns:UNIV.length, t500:t500Rows().length, calling:UNIV.length,
- master:(ALLUNIV.length||UNIV.length), notfit:(typeof nonFitRows==="function"?nonFitRows().length:0)||undefined, jobs:(typeof JOBS!=="undefined"&&JOBS.length)||undefined,
+ insights:UNIV.length, master:(ALLUNIV.length||UNIV.length), notfit:(typeof nonFitRows==="function"?nonFitRows().length:0)||undefined, jobs:(typeof JOBS!=="undefined"&&JOBS.length)||undefined,
  resources:(RES?Object.values(RES.shelf).reduce((a,s)=>a+s.items.filter(i=>!i.url).length,0)||undefined:undefined),
  analyse:0, audit:(AUDIT&&AUDIT.moved?AUDIT.moved.length:0)||undefined, org:ORG.meta.total, cover:COVERAGE.todo,
 
@@ -6458,13 +7123,14 @@ async function loadSeed(){
 
 function render(){
   applyFilters();applyNSFilters();renderNav();
-  const P={lead:pageLead,resources:pageResources,master:pageMaster,notfit:pageNotFit,jobs:pageJobs,webinars:pageWebinars,audit:pageAudit,webinar:pageWebinar,
+  const P={lead:pageLead,insights:pageInsights,resources:pageResources,master:pageMaster,notfit:pageNotFit,jobs:pageJobs,webinars:pageWebinars,audit:pageAudit,webinar:pageWebinar,
    campaigns:pageCampaigns,t500:pageTalent500,calling:pageCalling,funnel:pageFunnel,explore:pageExplore,plan:pagePlan,scen:pageScen,coach:pageCoach,org:pageOrg,pa:pagePA,discipline:pageDisc,
    voice:pageVoice,queue:pageQueue,noshow:pageNoShow,noniql:pageNonIQL,upsell:pageUpsell,segments:pageSeg,
    leads:pageLeads,analyse:pageCallAnalysis,rec:pageRecordings,
    cover:pageCoverage,trend:pageTrend,upload:pageUpload};
   $("page").innerHTML=P[TAB]();
-  { const wp=$("wbPick"); if(wp) wp.innerHTML=wbPicker();
+  { const gw=$("gfWrap"); if(gw) gw.innerHTML=gfBar()+qjPanel();
+    const wp=$("wbPick"); if(wp) wp.innerHTML=wbPicker();
     const nf=$("nfChip"); if(nf) nf.innerHTML=nfChip(); }
   if(TAB==="coach"){const el=$("coachIn");if(el&&COACH_Q){el.focus();el.setSelectionRange(el.value.length,el.value.length)}}
   if(TAB==="upload"){
@@ -6480,11 +7146,20 @@ function render(){
 
 (async function init(){
   $("stamp").textContent=new Date().toLocaleDateString([], {day:"2-digit",month:"short",year:"numeric"});
+  try{ DENSE=!!localStorage.getItem("cbi:dense"); if(DENSE)document.body.classList.add("dense") }catch(e){}
+  document.addEventListener("keydown",e=>{
+    if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){ e.preventDefault(); qjOpen() }
+    if(e.key==="Escape"&&QJ) qjClose();
+  });
   await resLoad();
   await jobsLoad();
   await loadSeed();
   const restored=await restoreSaved();
   if(restored)logMsg("Restored the last saved version.","b");
+  // Route the initial view through the same filter path every later change uses,
+  // otherwise the boot count and the cleared-filters count disagree.
+  if(typeof gfApply==="function" && ALLUNIV.length) UNIV=gfBase();
+  applyFilters(); applyNSFilters();
   await loadSnaps();await loadFileLog();loadMe();
   if(!SNAPS.length)SNAPS=[snapOf("starting point")];
   render();

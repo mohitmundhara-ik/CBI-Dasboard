@@ -1,4 +1,5 @@
 // api/sheet.js — reads the FDE Live DB straight from Google Sheets.
+// Deployed at https://cbi-dashboard-ik.vercel.app/api/sheet
 //
 // No libraries. Node's built-in crypto signs the JWT, so there is nothing to
 // npm install and nothing to keep updated.

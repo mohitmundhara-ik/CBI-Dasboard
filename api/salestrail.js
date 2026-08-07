@@ -1,4 +1,5 @@
 // api/salestrail.js — Salestrail Call Analytics, proxied.
+// Deployed at https://cbi-dashboard-ik.vercel.app/api/salestrail
 //
 // This has to run server-side. Salestrail uses HTTP Basic auth, and Basic auth
 // credentials in a browser file are readable by anyone you send the file to.

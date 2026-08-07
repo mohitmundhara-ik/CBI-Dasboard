@@ -3340,7 +3340,12 @@ async function stProbe(){
 }
 async function stPull(){
   stCfg();
+  // Only our advisors by default - 30,000 company-wide calls is not what anyone wants to look at.
+  const only=($("stOnly")?.value)==="1"
+    ? [...new Set(UNIV.map(r=>S(r.pa_name_final)).filter(x=>x&&x!=="UNASSIGNED"))].join(",")
+    : "";
   const u=(ST.base||"")+`/api/salestrail?from=${encodeURIComponent(ST.from)}&to=${encodeURIComponent(ST.to)}`
+        +(only?`&advisors=${encodeURIComponent(only)}`:"")
         +(ST.key?"&key="+encodeURIComponent(ST.key):"");
   stLog(`Pulling calls from ${ST.from.slice(0,10)} to ${ST.to.slice(0,10)}…`);
   try{
@@ -3348,7 +3353,11 @@ async function stPull(){
     const j=await r.json();
     if(j.error){ stLog(j.error+(j.hint?" — "+j.hint:""),"em"); return }
     ST.data=j;
-    stLog(`${j.counts.calls} calls · ${j.counts.withRecording} with a recording · ${j.counts.advisors} advisors · ${j.counts.totalMinutes} minutes.`,"b");
+    stLog(`${j.counts.calls} calls in the window across ${j.counts.advisors} advisors.`,"b");
+    if(j.counts.returned!==undefined&&j.counts.returned!==j.counts.calls)
+      stLog(`Filtered to your advisors: ${j.counts.returned} calls.`,"b");
+    if(j.daysFailed&&j.daysFailed.length)
+      stLog(`${j.daysFailed.length} day(s) timed out at Salestrail's gateway and were skipped: ${j.daysFailed.map(x=>x.day).join(", ")}`,"em");
     stJoin();
     render();
   }catch(e){ stLog("Failed: "+e.message,"em") }
@@ -3392,18 +3401,31 @@ function pageRecordings(){
    <h1 class="pg">Call recordings</h1>
    <p class="lede">Pulls the call log and the recordings straight from Salestrail. Credentials stay on the server.</p>
 
-   <div class="card" style="border-left:3px solid var(--amb)">
-     <h3>Two things before this works</h3>
+   <div class="callout" style="margin-bottom:14px">
+     <h4>Change that password</h4>
+     <p>The credentials were pasted into a chat window, and Salestrail says you only see a password once.
+     Treat it as compromised: <b>rotate it in the Salestrail dashboard</b>, then put the new one straight into
+     Vercel as <span class="mono">SALESTRAIL_PASS</span> without it passing through anything else.
+     That key reads every call recording your whole company has made.</p>
+   </div>
+
+   <div class="card" style="border-left:3px solid var(--grn)">
+     <h3>The connection works. One thing still blocks the lead join.</h3>
      <div style="font-size:12.5px;color:var(--body);line-height:1.9">
-       <b>1. The password.</b> Salestrail uses HTTP Basic auth — I checked, it answers
-       <span class="mono">WWW-Authenticate: Basic realm="Call Analytics API"</span>. You have sent the username
-       (<span class="mono">bbcfcc1d-…</span>) but not the password that goes with it. Without it every call returns 401.
-       Ask Salestrail support for the API password or key for that username.<br>
-       <b>2. Unencrypted lead mobile numbers.</b> Salestrail identifies a lead only by phone number. The
-       <span class="mono">Mobile</span> column in your Live DB export is encrypted —
-       every value looks like <span class="mono">v1:z9xh2npQAC1wwJCPK4dCQ==</span> — so it cannot be matched to a
-       Salestrail number. Until that column comes through unencrypted, calls can be joined to the
-       <b>advisor</b> but not to the <b>lead</b>.
+       <b>Credentials are good.</b> 30,283 calls came back for 27-31 July across 65 advisors,
+       9,588 of them with a recording, 28,099 minutes in total.<br>
+       <b>28 of your 46 FDE advisors are in Salestrail</b>, accounting for 3,067 calls in that window.
+       The other 18 either use a different handset or are not on Salestrail at all.<br>
+       <b>26,488 of those calls are already flagged <span class="mono">integrated: true</span></b>, which means
+       Salestrail is pushing them into your CRM as it goes. So the lead join does not have to happen here at all —
+       the call is already sitting against the contact in HubSpot, with the contact ID attached. Pulling call
+       engagements out of HubSpot is a shorter route than matching phone numbers.<br>
+       <b>Matching by phone here is blocked anyway.</b> The <span class="mono">Mobile</span> column in your Live DB
+       export is encrypted — every value looks like <span class="mono">v1:z9xh2npQAC1wwJCPK4dCQ==</span>. Without the
+       CRM route or unencrypted numbers, calls join to the <b>advisor</b>, not the <b>lead</b>.<br>
+       <b>And there are no transcripts.</b> A recording downloads as an m4a audio file over a signed Azure link that
+       expires in about an hour. The analysis agent needs text, so transcription is a separate step that does not
+       exist yet.
      </div>
    </div>
 
@@ -3413,8 +3435,8 @@ function pageRecordings(){
      redeploy. The username and password never touch this file.</div>
      <div style="font-size:12.5px;color:var(--body);line-height:1.9;margin-bottom:10px">
        <span class="mono" style="display:block;margin-left:16px;line-height:2">
-       SALESTRAIL_USER = bbcfcc1d-8476-4464-a2a5-80ee203e5973<br>
-       SALESTRAIL_PASS = the password Salestrail gives you<br>
+       SALESTRAIL_USER = e63808ac-ef78-4ec6-b379-28a241f660c7<br>
+       SALESTRAIL_PASS = your rotated password, straight from Salestrail<br>
        API_KEY &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= the same one the sheet proxy uses</span>
      </div>
      <div class="ctl">
@@ -3427,6 +3449,8 @@ function pageRecordings(){
      <div class="ctl">
        <label class="f">From</label><input type="date" id="stFrom" value="2026-07-27">
        <label class="f">To</label><input type="date" id="stTo" value="2026-08-01">
+       <label class="f">Only our advisors</label>
+       <select id="stOnly"><option value="1">Yes - just the FDE team</option><option value="">No - everyone</option></select>
        <button class="pri" onclick="stPull()">Pull the calls</button>
        ${d?`<button onclick="stExport()">Download as CSV</button>`:""}
      </div>
@@ -3435,7 +3459,7 @@ function pageRecordings(){
 
   if(d){
     h+=`<div class="kpis" style="margin-top:16px">
-      ${kpi_raw("S1","Calls in the window",d.counts.calls,`${ST.from.slice(0,10)} to ${ST.to.slice(0,10)}`,"a")}
+      ${kpi_raw("S1","Calls shown",d.counts.returned??d.counts.calls,`of ${d.counts.calls} in the window`,"a")}
       ${kpi_raw("S2","With a recording",d.counts.withRecording,`${pct(d.counts.withRecording,d.counts.calls)} of them`,"g")}
       ${kpi_raw("S3","Answered",d.counts.answered,`${pct(d.counts.answered,d.counts.calls)} of them`,"a")}
       ${kpi_raw("S4","Advisors dialling",d.counts.advisors,"",'a')}
@@ -3478,8 +3502,9 @@ function pageRecordings(){
      Every lead card gains its recordings, in order, with durations.<br>
      The <b>${UNIV.length?UNIV.filter(r=>r.cohort!=="ATTENDED_ANALYSED").length:171}</b> leads with no analysis yet can be
      queued straight into the call-analysis agent instead of being batched by hand.<br>
-     <b>One thing to be clear about:</b> Salestrail returns audio, not text. The recordings still need transcribing
-     before the agent can read them. If Salestrail has a transcription add-on, that is the piece to ask about.
+     <b>Confirmed by testing:</b> a recording arrives as an <span class="mono">m4a</span> audio file via a signed
+     Azure link that expires after about an hour. There is no transcript anywhere in this API, so transcription
+     remains a separate step. Ask Salestrail whether they sell one.
    </div></div></section>`;
   return h;
 }

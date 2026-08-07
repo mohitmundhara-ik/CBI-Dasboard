@@ -67,15 +67,22 @@ export default async function handler(req, res) {
     }
 
     // --- a single recording ---
+    // Salestrail 302s to a time-limited Azure blob link. The audio is m4a/mp4.
     if (req.query.callId && req.query.recording) {
       const r = await fetch(`${BASE}/export/calls/${encodeURIComponent(req.query.callId)}/recording`,
-        { headers: { Authorization: auth } });
-      if (!r.ok) return res.status(r.status).json({ error: `Salestrail returned ${r.status} for that recording` });
-      const ct = r.headers.get("content-type") || "";
-      if (/json/.test(ct)) return res.status(200).json(await r.json());
-      // audio comes back as bytes; hand it straight through
-      const buf = Buffer.from(await r.arrayBuffer());
-      res.setHeader("Content-Type", ct || "audio/mpeg");
+        { headers: { Authorization: auth }, redirect: "manual" });
+
+      const loc = r.headers.get("location");
+      // Hand back the signed link rather than the bytes when asked - much faster,
+      // and it lets a browser stream straight from Azure.
+      if (loc && req.query.link) {
+        return res.status(200).json({ ok: true, url: loc, expiresInAbout: "an hour" });
+      }
+      const target = loc || `${BASE}/export/calls/${encodeURIComponent(req.query.callId)}/recording`;
+      const a = await fetch(target, loc ? {} : { headers: { Authorization: auth } });
+      if (!a.ok) return res.status(a.status).json({ error: `Recording fetch returned ${a.status}` });
+      const buf = Buffer.from(await a.arrayBuffer());
+      res.setHeader("Content-Type", a.headers.get("content-type") || "audio/mp4");
       res.setHeader("Cache-Control", "private, max-age=600");
       return res.status(200).send(buf);
     }
@@ -84,21 +91,36 @@ export default async function handler(req, res) {
     const from = req.query.from, to = req.query.to;
     if (!from || !to) return res.status(400).json({ error: "Needs from and to, both ISO date-times" });
 
-    // byCreated is when the record landed; the plain route is when the call happened.
+    // Salestrail's gateway times out at 30 seconds and a single day is roughly
+    // 4 MB, so anything over about two days fails. Fetch a day at a time.
     const path = req.query.byCreated ? "/export/calls/byCreated/json" : "/export/calls/json";
-    const r = await fetch(`${BASE}${path}?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
-      { headers: { Authorization: auth, Accept: "application/json" } });
-
-    if (!r.ok) {
-      const txt = await r.text().catch(() => "");
-      return res.status(r.status).json({
-        error: `Salestrail returned ${r.status}`,
-        detail: txt.slice(0, 300),
-        hint: r.status === 401 ? "Check SALESTRAIL_PASS. The username on its own will always 401." : "",
-      });
+    const t0 = new Date(from), t1 = new Date(to);
+    const spans = [];
+    for (let d = new Date(t0); d < t1; d.setUTCDate(d.getUTCDate() + 1)) {
+      const a = new Date(d);
+      const b = new Date(Math.min(new Date(d).setUTCDate(d.getUTCDate() + 1), t1.getTime()));
+      spans.push([a.toISOString(), b.toISOString()]);
+      if (spans.length > 31) break;            // a month is plenty
     }
 
-    const calls = await r.json();
+    let calls = [];
+    const failed = [];
+    for (const [a, b] of spans) {
+      const r = await fetch(`${BASE}${path}?from=${encodeURIComponent(a)}&to=${encodeURIComponent(b)}`,
+        { headers: { Authorization: auth, Accept: "application/json" } });
+      if (!r.ok) {
+        if (r.status === 401) {
+          return res.status(401).json({
+            error: "Salestrail rejected the credentials",
+            hint: "Check SALESTRAIL_USER and SALESTRAIL_PASS. Note the username and password are a pair - a username from a different account will always 401.",
+          });
+        }
+        failed.push({ day: a.slice(0, 10), status: r.status });
+        continue;
+      }
+      const chunk = await r.json().catch(() => []);
+      if (Array.isArray(chunk)) calls = calls.concat(chunk);
+    }
     const rows = (Array.isArray(calls) ? calls : []).map(c => ({
       callId: c.callId,
       advisorEmail: c.userEmail,
@@ -121,6 +143,11 @@ export default async function handler(req, res) {
 
     const withRec = rows.filter(x => x.hasRecording).length;
     const advisors = [...new Set(rows.map(x => x.advisorEmail).filter(Boolean))];
+    // Optional: only the advisors you care about, so 30,000 calls become a few thousand.
+    const only = String(req.query.advisors || "").split(",").map(x => x.trim()).filter(Boolean);
+    const out = only.length
+      ? rows.filter(x => only.includes(x.advisorName) || only.includes(x.advisorEmail))
+      : rows;
 
     res.setHeader("Cache-Control", "s-maxage=120, stale-while-revalidate=600");
     return res.status(200).json({
@@ -128,13 +155,17 @@ export default async function handler(req, res) {
       window: { from, to },
       counts: {
         calls: rows.length,
+        returned: out.length,
         withRecording: withRec,
         answered: rows.filter(x => x.answered).length,
         advisors: advisors.length,
         totalMinutes: Math.round(rows.reduce((a, x) => a + (x.durationSec || 0), 0) / 60),
       },
       advisors,
-      calls: rows,
+      daysFetched: spans.length,
+      daysFailed: failed,
+      filteredToAdvisors: only.length || null,
+      calls: out,
     });
   } catch (e) {
     return res.status(500).json({ error: String(e.message || e) });

@@ -6389,21 +6389,54 @@ function pageToday(){
 }
 
 /* ============ NAV ============ */
+/* Ordered by how often it gets opened, not by topic. A page you need every
+   morning should not sit below one you open once a month. */
 const TABS=[
- ["TODAY",[["today","Today"]]],
- ["OVERVIEW",[["lead","Summary"],["insights","Insights"],["conversion","Conversion"],
-              ["forecast","Forecast & cohorts"],["webinars","Webinars"],["webinar","Webinar view"]]],
- ["MARKETING",[["campaigns","Where leads come from"],["t500","Talent 500"],
-               ["jobs","FDE jobs"],["org","FDE org chart"]]],
- ["SALES",[["plan","Do this next"],["queue","Call list"],["calling","Calling effort"],
-           ["pa","Advisors"],["coach","PA coach"],["discipline","Wrong info given"],
-           ["voice","What leads said"]]],
- ["LEADS",[["master","All leads"],["explore","Explore"],["scen","Lead states"],
-           ["noshow","No shows"],["upsell","Existing students"],
-           ["notfit","Not a fit"],["noniql","Non-IQL leads"]]],
- ["WORKSPACE",[["resources","Resources"],["analyse","Call analysis"],["rec","Recordings"]]],
- ["DATA",[["cover","Coverage & uploads"],["audit","What changed"],
-          ["trend","Track progress"],["upload","Upload data"]]],
+ ["EVERY DAY",[
+   ["today","Today"],
+   ["queue","Call list"],
+   ["plan","Do this next"],
+   ["master","All leads"]]],
+
+ ["EVERY WEEK",[
+   ["lead","Summary"],
+   ["insights","Insights"],
+   ["conversion","Conversion"],
+   ["pa","Advisors"],
+   ["calling","Calling effort"],
+   ["cover","Coverage & uploads"]]],
+
+ ["WHEN YOU NEED IT",[
+   ["explore","Explore"],
+   ["noshow","No shows"],
+   ["upsell","Existing students"],
+   ["scen","Lead states"],
+   ["discipline","Wrong info given"],
+   ["voice","What leads said"],
+   ["notfit","Not a fit"],
+   ["noniql","Non-IQL leads"]]],
+
+ ["MARKETING",[
+   ["campaigns","Where leads come from"],
+   ["t500","Talent 500"],
+   ["webinars","Webinars"],
+   ["webinar","Webinar view"]]],
+
+ ["EVERY MONTH",[
+   ["forecast","Forecast & cohorts"],
+   ["jobs","FDE jobs"],
+   ["org","FDE org chart"],
+   ["trend","Track progress"]]],
+
+ ["REFERENCE",[
+   ["resources","Resources"],
+   ["coach","PA coach"],
+   ["analyse","Call analysis"],
+   ["rec","Recordings"]]],
+
+ ["DATA",[
+   ["upload","Upload data"],
+   ["audit","What changed"]]],
 ];
 const TABCOUNT=()=>({
  today:(typeof alerts==="function"?alerts(UNIV).filter(a=>a.breach).length:0)||undefined,

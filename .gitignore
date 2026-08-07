@@ -1,0 +1,19 @@
+# Never commit credentials. Everything secret lives in Vercel env vars.
+.env
+.env.*
+*.pem
+*-key.json
+service-account*.json
+
+node_modules/
+.vercel/
+.DS_Store
+Thumbs.db
+
+# Working data. Lead names, phone numbers and call content do not belong in git.
+*.xlsx
+*.xls
+*.csv
+*.tsv
+uploads/
+data/

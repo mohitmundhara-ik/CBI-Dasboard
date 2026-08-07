@@ -363,11 +363,25 @@ h3.sec{margin:26px 0 4px;font-size:17px;font-weight:700;letter-spacing:-.01em;co
 .fnnote{font-size:11.5px;color:var(--faint);font-weight:400;margin-top:2px;line-height:1.4}
 .fnrow .lb{line-height:1.25}
 .hbar .tr{position:relative}
-.wbchecks{display:inline-flex;gap:4px;align-items:center;flex-wrap:wrap}
-.wbchk{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:4px 10px;border-radius:16px;
-  border:1px solid var(--s300);background:var(--s0);cursor:pointer;white-space:nowrap;user-select:none}
-.wbchk.on{border-color:var(--cy);background:var(--cy-l);color:var(--navy);font-weight:700}
-.wbchk input{margin:0;cursor:pointer}
+.wbdrop{position:relative;display:inline-block}
+.wbbtn{font-size:12.5px;font-weight:700;padding:5px 13px;border-radius:7px;border:1px solid var(--s300);
+  background:#fff;cursor:pointer;white-space:nowrap}
+.wbbtn.on{border-color:var(--cy);background:var(--cy-l);color:var(--navy)}
+.wbbtn i{font-style:normal;opacity:.55;margin-left:3px}
+.wbmenu{position:absolute;top:calc(100% + 6px);left:0;min-width:260px;background:#fff;
+  border:1px solid var(--s200);border-radius:10px;box-shadow:0 12px 34px rgba(11,37,69,.18);
+  z-index:60;padding:6px;max-height:380px;overflow:auto}
+.wbopt{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;cursor:pointer;
+  font-size:13px;user-select:none}
+.wbopt:hover{background:var(--s50)}
+.wbopt.on{background:var(--cy-l);font-weight:700}
+.wbopt input{margin:0;cursor:pointer;flex-shrink:0}
+.wbopt span:first-of-type{flex:1;min-width:0}
+.wbn{font-size:11.5px;color:var(--faint);font-variant-numeric:tabular-nums}
+.wbsep{height:1px;background:var(--s200);margin:5px 8px}
+.wbfoot{display:flex;align-items:center;gap:10px;padding:9px 10px 4px;border-top:1px solid var(--s100);
+  margin-top:5px}
+.wbfoot .mute{font-size:11px}
 .nfchip{font-size:11.5px;padding:4px 10px;border-radius:16px;border:1px solid var(--s300);
   background:var(--s0);cursor:pointer;white-space:nowrap}
 .nfchip.on{border-color:var(--amb);background:#FEF6E7;color:#7E5109;font-weight:700}
@@ -842,8 +856,19 @@ const pct=(n,d)=>d?(n/d*100).toFixed(1)+"%":"—";
 const inr=n=>"₹"+Number(n).toLocaleString("en-IN");
 const cqsCol=v=>v==null?"var(--mute)":v<30?"var(--red)":v<50?"var(--amb)":v<70?"var(--cy-d)":"var(--grn)";
 const tempCls=t=>({HOT:"hot",WARM:"warm",COOL:"cool",COLD:"",DEAD:""}[t]||"");
+/* The call rows have to be cut down to the leads currently in view first.
+   Without this the webinar picker and the filter bar changed the lead pages
+   and left every call page showing the full set - which looks exactly like
+   the selection doing nothing. */
+let VROWS=[];
+function scopedRows(){
+  if(!UNIV || !UNIV.length) return ROWS;
+  const ids=new Set(UNIV.map(r=>String(r.hubspot_id)));
+  return ROWS.filter(r=>ids.has(String(r.hubspot_id)));
+}
 function applyFilters(){
-  VIEW=ROWS.filter(r=>(!F.pa||r.pa_name_final===F.pa)&&(!F.pod||r.pod_final===F.pod)&&
+  VROWS=scopedRows();
+  VIEW=VROWS.filter(r=>(!F.pa||r.pa_name_final===F.pa)&&(!F.pod||r.pod_final===F.pod)&&
    (!F.temp||r.temperature===F.temp)&&(!F.act||r.action_bucket===F.act)&&
    (!F.call||r.call_type===F.call)&&
    (!F.q||JSON.stringify(r).toLowerCase().includes(F.q.toLowerCase())));
@@ -1036,7 +1061,7 @@ function hi(q,hit){
 
 /* build the evidence for one lead and one kind of defect */
 function defectEvidence(id,kind){
-  const call=ROWS.find(r=>String(r.hubspot_id)===String(id));
+  const call=VROWS.find(r=>String(r.hubspot_id)===String(id));
   const u=UNIV.find(r=>String(r.hubspot_id)===String(id))||{};
   if(!call)return [];
   const out=[];
@@ -1113,7 +1138,7 @@ function defectPopup(kind,rows){
   let shown=0, noquote=0;
   rows.forEach(r=>{
     const evs=defectEvidence(r.hubspot_id, kind==="multi"?"price":kind);
-    const call=ROWS.find(x=>String(x.hubspot_id)===String(r.hubspot_id))||{};
+    const call=VROWS.find(x=>String(x.hubspot_id)===String(r.hubspot_id))||{};
     h+=`<div class="dfc">
       <div class="dfhead">
         <span class="pill mono">${esc(r.hubspot_id)}</span>
@@ -1161,7 +1186,7 @@ function defectPopup(kind,rows){
   openDrawer();
 }
 function openWrongLead(id){
-  const full=ROWS.find(r=>String(r.hubspot_id)===String(id));
+  const full=VROWS.find(r=>String(r.hubspot_id)===String(id));
   if(full){leadCard(full);return}
   const u=UNIV.find(r=>String(r.hubspot_id)===String(id));
   if(u)leadCardUniv(u);
@@ -1181,7 +1206,7 @@ function pricePopup(n){
       <p>The approved FDE price is <b>${CANON_PRICE_TXT}</b>. These ${rows.length} people were told
       <b>₹${n.toLocaleString("en-IN")}</b> instead. Every quote below is word for word.</p></div>`;
   rows.forEach(r=>{
-    const call=ROWS.find(x=>String(x.hubspot_id)===String(r.hubspot_id))||{};
+    const call=VROWS.find(x=>String(x.hubspot_id)===String(r.hubspot_id))||{};
     const inr=n.toLocaleString("en-IN");
     const alt=[inr,n.toLocaleString("en-US"),String(n),(n%100000===0?(n/100000)+" lakh":null)]
       .filter(Boolean).map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|");
@@ -1217,7 +1242,7 @@ function advisorDefects(pa){
     if(S(r.message_defects).includes("PRICE"))kinds.push("price");
     if(S(r.message_defects).includes("DURATION"))kinds.push("duration");
     if(S(r.message_defects).includes("NAME"))kinds.push("name");
-    const call=ROWS.find(x=>String(x.hubspot_id)===String(r.hubspot_id))||{};
+    const call=VROWS.find(x=>String(x.hubspot_id)===String(r.hubspot_id))||{};
     h+=`<div class="dfc"><div class="dfhead">
       <span class="pill mono">${esc(r.hubspot_id)}</span>
       ${call.cqs!=null?`<span class="pill" style="color:${cqsCol(call.cqs)}">call score ${call.cqs}</span>`:""}
@@ -1236,7 +1261,7 @@ function advisorDefects(pa){
 
 /* every defect on one lead, in one popup */
 function leadDefects(r){
-  const call=ROWS.find(x=>String(x.hubspot_id)===String(r.hubspot_id))||{};
+  const call=VROWS.find(x=>String(x.hubspot_id)===String(r.hubspot_id))||{};
   DRILL={rows:[r],cols:DRILL_COLS_UNIV,name:"wrong_"+r.hubspot_id};
   $("dEyebrow").textContent="What this lead was actually told";
   $("dTitle").innerHTML=`<span class="mono">${esc(r.hubspot_id)}</span>`;
@@ -1330,7 +1355,7 @@ let XSET="iql";         // "iql" | "noniql" | "both"
 let MASTER=null;        // merged rows, built once per render
 
 function buildMaster(){
-  const call={}; ROWS.forEach(r=>call[String(r.hubspot_id)]=r);
+  const call={}; VROWS.forEach(r=>call[String(r.hubspot_id)]=r);
   const nq=NONIQL.map(u=>{
     const c=call[String(u.hubspot_id)]||{};
     return {...u, iql:"Non-IQL", is_this_batch:1, cohort:"NON_IQL_ATTENDED",
@@ -1560,7 +1585,7 @@ function pageExplore(){
 }
 function openExplore(i){
   const r=window._XR[i];
-  const full=ROWS.find(x=>String(x.hubspot_id)===String(r.hubspot_id));
+  const full=VROWS.find(x=>String(x.hubspot_id)===String(r.hubspot_id));
   if(full)leadCard(full); else leadCardUniv(r);
 }
 function exportExplore(){
@@ -1854,7 +1879,7 @@ function coachSet(v){$("coachIn").value=v;askCoach(v)}
 function pageCoach(){
   const hits=COACH_Q?matchCards(COACH_Q):[];
   const topics=[...new Set(CARDS.map(c=>c.topic))];
-  window.__NONEXT=ROWS.filter(r=>r.next_step_status==="NOT_DEFINED").length;
+  window.__NONEXT=VROWS.filter(r=>r.next_step_status==="NOT_DEFINED").length;
   let h=`<section><div class="eyebrow">Section 8 · Ask before you dial</div>
    <h1 class="pg">PA coach</h1>
    <p class="lede">Type a question the way you would ask a colleague. Everything here is already inside this file —
@@ -2185,11 +2210,11 @@ function fileStamp(files, analysisRows, dbRows, source){
     when: new Date().toLocaleString([], {day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}),
     files: files, source: source,
     analysis: analysisRows, db: dbRows,
-    read: ROWS.length,
+    read: VROWS.length,
     registered: UNIV.length,
     live: UNIV.filter(r=>num(r.attended_live)===1).length,
     noshow: UNIV.filter(r=>r.cohort==="NO_SHOW").length,
-    cqs: avg(ROWS.filter(r=>r.call_type==="SUBSTANTIVE_CONVERSATION").map(r=>r.cqs).filter(v=>v!=null)),
+    cqs: avg(VROWS.filter(r=>r.call_type==="SUBSTANTIVE_CONVERSATION").map(r=>r.cqs).filter(v=>v!=null)),
     batches: [...new Set((ALLUNIV.length?ALLUNIV:UNIV).map(r=>S(r.webinar_batch)))].join(", "),
     moved: [], newLeads: 0, gone: 0,
   };
@@ -2363,7 +2388,7 @@ function pageCoverage(){
   return h+"</section>";
 }
 function cvRows(label){
-  const ids=new Set(ROWS.map(r=>String(r.hubspot_id)));
+  const ids=new Set(VROWS.map(r=>String(r.hubspot_id)));
   const an=r=>ids.has(String(r.hubspot_id));
   const live=r=>num(r.attended_live)===1, off=r=>num(r.attended_offdate)===1;
   if(label.startsWith("Attended live, calls read"))      return UNIV.filter(r=>an(r)&&live(r));
@@ -2974,9 +2999,9 @@ const CA_COHORTS = [
   ["noshow_dormant",  "No-shows nobody has called since",  () => UNIV.filter(r=>r.followup_state==="ABANDONED_SINCE_WEBINAR")],
   ["attended_unread", "Came, calls not read yet",          () => UNIV.filter(r=>r.cohort==="ATTENDED_UNANALYSED")],
   ["never_worked",    "Came, nobody called since",         () => UNIV.filter(r=>r.scenario==="S10_ATTENDED_NEVER_WORKED")],
-  ["reminder_only",   "Only ever got a reminder call",     () => ROWS.filter(r=>r.call_type==="WEBINAR_REMINDER_ONLY")],
-  ["repitch",         "Warm lead, weak call",              () => ROWS.filter(r=>r.action_bucket==="RE_PITCH_FDE")],
-  ["hot_nodate",      "Hot, no next step agreed",          () => ROWS.filter(r=>r.temperature==="HOT"&&r.next_step_status!=="DEFINED")],
+  ["reminder_only",   "Only ever got a reminder call",     () => VROWS.filter(r=>r.call_type==="WEBINAR_REMINDER_ONLY")],
+  ["repitch",         "Warm lead, weak call",              () => VROWS.filter(r=>r.action_bucket==="RE_PITCH_FDE")],
+  ["hot_nodate",      "Hot, no next step agreed",          () => VROWS.filter(r=>r.temperature==="HOT"&&r.next_step_status!=="DEFINED")],
   ["existing",        "Already an IK student",             () => UNIV.filter(r=>num(r.existing_student)===1&&num(r.enrolled_in_fde)===0)],
   ["noniql",          "Non-IQL who came anyway",           () => NONIQL],
   ["explore",         "Whatever Explore is filtered to",   () => (window._XR||[])],
@@ -3541,8 +3566,12 @@ function wbList(){ return (typeof WBIDX !== "undefined" && WBIDX.length) ? WBIDX
    of them arrive. */
 function wbSelected(){
   const l = wbList();
+  // WBSEL can be knocked out by an older saved state or a bad restore, and a
+  // null here takes the whole page down. Recover rather than throw.
+  if(!(WBSEL instanceof Set)) WBSEL = new Set();
   if(!WBSEL.size) return l;
-  return l.filter(w => WBSEL.has(w.date));
+  const sel = l.filter(w => WBSEL.has(w.date));
+  return sel.length ? sel : l;   // a stale date must not empty the dashboard
 }
 function wbCurrent(){
   const sel = wbSelected();
@@ -3553,10 +3582,11 @@ function wbCurrent(){
 }
 function wbApply(){ gfApply() }
 function wbToggle(date){
+  if(!(WBSEL instanceof Set)) WBSEL=new Set();
   if(WBSEL.has(date)) WBSEL.delete(date); else WBSEL.add(date);
   wbApply();
 }
-function wbAll(){ WBSEL.clear(); wbApply() }
+function wbAll(){ WBSEL=new Set(); wbApply() }
 function wbSwitch(date){ WBSEL = new Set([date]); wbApply() }
 
 /* Role fit. Kept in one place so every page agrees. */
@@ -3574,13 +3604,29 @@ function nfChip(){
 
 /* The picker, shown in the top bar so it is never ambiguous which cohort you
    are reading. */
+let WBOPEN=false;
+function wbDropToggle(){ WBOPEN=!WBOPEN; render() }
 function wbPicker(){
-  const l = wbList(); if(l.length < 2) return "";
-  return `<span class="wbchecks">
-    <span class="wbchk ${WBSEL.size?"":"on"}" onclick="wbAll()">All webinars</span>
-    ${l.map(w=>`<label class="wbchk ${WBSEL.has(w.date)?"on":""}">
-      <input type="checkbox" ${WBSEL.has(w.date)?"checked":""} onchange="wbToggle('${w.date}')">
-      ${w.label} · ${w.registered}</label>`).join("")}
+  const l = wbList(); if(!l.length) return "";
+  const sel = wbSelected();
+  const label = !WBSEL.size ? `All webinars · ${sel.length}`
+    : sel.length === 1 ? sel[0].label
+    : `${sel.length} webinars`;
+  return `<span class="wbdrop">
+    <button class="wbbtn ${WBSEL.size?"on":""}" onclick="wbDropToggle()">
+      ${esc(label)} <i>▾</i></button>
+    ${WBOPEN ? `<div class="wbmenu">
+      <label class="wbopt ${WBSEL.size?"":"on"}" onclick="wbAll();wbDropToggle()">
+        <input type="checkbox" ${WBSEL.size?"":"checked"} readonly>
+        <span><b>All webinars</b></span>
+        <span class="wbn">${l.reduce((a,w)=>a+w.registered,0)}</span></label>
+      <div class="wbsep"></div>
+      ${l.map(w=>`<label class="wbopt ${WBSEL.has(w.date)?"on":""}">
+        <input type="checkbox" ${WBSEL.has(w.date)?"checked":""} onchange="wbToggle('${w.date}')">
+        <span>${esc(w.label)}</span><span class="wbn">${w.registered}</span></label>`).join("")}
+      <div class="wbfoot"><button class="pri" onclick="wbDropToggle()">Done</button>
+        <span class="mute">Tick more than one to combine them.</span></div>
+    </div>` : ""}
   </span>`;
 }
 
@@ -5378,9 +5424,9 @@ function pageInsights(){
   const dcd   = R.filter(r => num(r.DCD_Flag) > 0);
   const rte   = R.filter(r => num(r.RTE_Flag) > 0);
   const B     = buyers(R);
-  const ids   = new Set(ROWS.map(r => String(r.hubspot_id)));
+  const ids   = new Set(VROWS.map(r => String(r.hubspot_id)));
   const read  = R.filter(r => ids.has(String(r.hubspot_id)));
-  const sub   = ROWS.filter(r => r.call_type === "SUBSTANTIVE_CONVERSATION");
+  const sub   = VROWS.filter(r => r.call_type === "SUBSTANTIVE_CONVERSATION");
   const showRate = n ? att.length / n : 0;
   const cqs = avg(sub.map(r => r.cqs).filter(v => v != null));
   const w = wbCurrent();
@@ -5465,7 +5511,7 @@ function pageInsights(){
   /* ---- 5. who is working it ---- */
   const paRows = Object.entries(by(R,"pa_name_final")).filter(([,v]) => v >= 4).map(([k, v]) => {
     const g = R.filter(r => S(r.pa_name_final) === k);
-    const gc = ROWS.filter(r => S(r.pa_name_final) === k && r.call_type === "SUBSTANTIVE_CONVERSATION");
+    const gc = VROWS.filter(r => S(r.pa_name_final) === k && r.call_type === "SUBSTANTIVE_CONVERSATION");
     const sc = avg(gc.map(r => r.cqs).filter(x => x != null));
     return {x: v, y: sc ?? 0, r: Math.sqrt(sumOf(g,"total_tt"))/2.2, label: k.split(" ")[0],
             color: (sc||0) < 40 ? "#C0392B" : (sc||0) > 55 ? "#1E8449" : PAL[0], leads: v, cqs: sc};
@@ -5533,9 +5579,9 @@ function pageInsights(){
    ], {title:"Coverage of the call analysis", note:`${read.length} of ${n} leads have been through the prompt.`, labelW:230})}`;
 
   /* ---- 9. what to do ---- */
-  const noNext = ROWS.filter(r => r.next_step_status === "NOT_DEFINED").length;
-  const noUrg  = ROWS.filter(r => r.urgency_flag === "NONE").length;
-  const hotNoDate = ROWS.filter(r => r.temperature === "HOT" && r.next_step_status !== "DEFINED").length;
+  const noNext = VROWS.filter(r => r.next_step_status === "NOT_DEFINED").length;
+  const noUrg  = VROWS.filter(r => r.urgency_flag === "NONE").length;
+  const hotNoDate = VROWS.filter(r => r.temperature === "HOT" && r.next_step_status !== "DEFINED").length;
   h += `<h3 class="sec">What the numbers argue for</h3>
    <div class="card"><div class="sub" style="margin:0;line-height:2">
      <b style="color:var(--ink)">Attendance is not the problem.</b> ${(showRate*100).toFixed(0)}% turned up, which is
@@ -5701,7 +5747,7 @@ function renderNav(){
         ${c[k]!==undefined?`<span class="ct">${c[k]}</span>`:""}</a>`});
   });
   $("nav").innerHTML=h;
-  $("foot").innerHTML=`${ROWS.length} analysed · ${UNIV.length} registered`;
+  $("foot").innerHTML=`${VROWS.length} analysed · ${UNIV.length} registered`;
 }
 function filterBar(keys){
   const opt=(k,arr,ph)=>`<label class="f">${ph}</label><select onchange="F.${k}=this.value;render()">
@@ -5715,7 +5761,7 @@ function filterBar(keys){
   if(keys.includes("q"))h+=`<input type="search" placeholder="Search any field or phrase…" value="${esc(F.q)}"
      oninput="F.q=this.value;clearTimeout(window._t);window._t=setTimeout(render,260)" style="min-width:260px">`;
   h+=`<button onclick="Object.keys(F).forEach(k=>F[k]='');render()">Reset</button>
-      <span class="mute mono" style="font-size:11px">${VIEW.length} of ${ROWS.length} analysed leads</span></div>`;
+      <span class="mute mono" style="font-size:11px">${VIEW.length} of ${VROWS.length} analysed leads</span></div>`;
   return h;
 }
 
@@ -5839,7 +5885,7 @@ function pageLead(){
            ["Came to the live webinar",live.length,UNIV.length,"live"],
            ["Marked attended on another day",offd.length,UNIV.length,"offd"],
            ["Did not come at all",nsAll.length,UNIV.length,"ns"],
-           ["Calls we have read",ROWS.length,live.length+offd.length,"read"],
+           ["Calls we have read",VROWS.length,live.length+offd.length,"read"],
            ["Attended but calls not read",unan.length,live.length+offd.length,"unan"]]
           .map(([lbl,n,base,key],i)=>`
           <div class="fnrow" onclick="cbDrill('${key}')">
@@ -6048,14 +6094,14 @@ function funnelDrill(i){
   if(f.grp==="Non-IQL"){drill("Funnel step "+(i+1),f.label,f.note,NONIQL,"nq");return}
   if(f.grp==="IQL only"){
     const map={6:ROWS,7:UNIV.filter(r=>r.cohort==="ATTENDED_UNANALYSED"),
-      8:ROWS.filter(r=>r.call_type==="SUBSTANTIVE_CONVERSATION"),
-      9:ROWS.filter(r=>r.call_type==="WEBINAR_REMINDER_ONLY"),
-      10:ROWS.filter(r=>r.call_type==="NO_CALLS_IN_SCOPE"),
-      11:ROWS.filter(r=>r.framing_flag&&r.framing_flag!=="NOT_APPLICABLE"),
-      12:ROWS.filter(r=>r.framing_flag==="COMPLIANT"),
-      13:ROWS.filter(r=>["CREATED","PARTIAL"].includes(r.urgency_flag)),
-      14:ROWS.filter(r=>r.next_step_status==="DEFINED"),
-      15:ROWS.filter(r=>["HOT","WARM"].includes(r.temperature))};
+      8:VROWS.filter(r=>r.call_type==="SUBSTANTIVE_CONVERSATION"),
+      9:VROWS.filter(r=>r.call_type==="WEBINAR_REMINDER_ONLY"),
+      10:VROWS.filter(r=>r.call_type==="NO_CALLS_IN_SCOPE"),
+      11:VROWS.filter(r=>r.framing_flag&&r.framing_flag!=="NOT_APPLICABLE"),
+      12:VROWS.filter(r=>r.framing_flag==="COMPLIANT"),
+      13:VROWS.filter(r=>["CREATED","PARTIAL"].includes(r.urgency_flag)),
+      14:VROWS.filter(r=>r.next_step_status==="DEFINED"),
+      15:VROWS.filter(r=>["HOT","WARM"].includes(r.temperature))};
     const rows=map[i]||ROWS;
     drill("Funnel step "+(i+1),f.label,f.note,rows, i===7?"univ":null);return}
   if(i===4){drill("Funnel step 5",f.label,f.note,UNIV.filter(r=>num(r.attended)===1),"univ");return}
@@ -6131,8 +6177,8 @@ function pageNonIQL(){
    {h:"What to do",f:r=>`<div style="max-width:400px;font-size:11.5px;color:var(--mute)">${esc(r.action)}</div>`}],
    N,"openNQ");
   // calls section
-  const read=N.filter(r=>ROWS.some(x=>String(x.hubspot_id)===String(r.hubspot_id)));
-  const rows=ROWS.filter(x=>N.some(r=>String(r.hubspot_id)===String(x.hubspot_id)));
+  const read=N.filter(r=>VROWS.some(x=>String(x.hubspot_id)===String(r.hubspot_id)));
+  const rows=VROWS.filter(x=>N.some(r=>String(r.hubspot_id)===String(x.hubspot_id)));
   window._NQC=rows;
   h+=`<h3 style="margin-top:26px;font-size:16px;font-weight:800;letter-spacing:-.02em">10.4 · Their calls</h3>`;
   if(!rows.length){
@@ -6627,7 +6673,7 @@ function pageUpsell(){
   const came=ES.filter(r=>num(r.attended)===1);
   const fde=UNIV.filter(r=>num(r.enrolled_in_fde)===1);
   window._ES=ES;
-  const nxt={}; ROWS.forEach(r=>nxt[String(r.hubspot_id)]=r.recommended_next_action);
+  const nxt={}; VROWS.forEach(r=>nxt[String(r.hubspot_id)]=r.recommended_next_action);
   let h=`<section><div class="eyebrow">Section 11 · Warmest people in the file</div>
    <h1 class="pg">Existing students</h1>
    <p class="lede">These already paid IK for something once, and then signed up for the FDE webinar anyway. That is
@@ -6712,7 +6758,7 @@ function pageUpsell(){
   return h+"</section>";}
 function openES(i){
   const r=window._ES[i];
-  const full=ROWS.find(x=>String(x.hubspot_id)===String(r.hubspot_id));
+  const full=VROWS.find(x=>String(x.hubspot_id)===String(r.hubspot_id));
   if(full)leadCard(full); else leadCardUniv(r);
 }
 

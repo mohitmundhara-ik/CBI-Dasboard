@@ -21,27 +21,18 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{background:var(--s50);color:var(--ink)}
-body{background-image:
-  radial-gradient(900px 420px at 12% -8%, rgba(0,169,206,.07), transparent 62%),
-  radial-gradient(720px 380px at 96% 2%, rgba(11,37,69,.05), transparent 60%);
-  background-attachment:fixed}
-body{font-family:Inter,system-ui,sans-serif;font-size:14px;line-height:1.5;
+
+body{font-family:Calibri,Carlito,'Segoe UI',sans-serif;font-size:14px;line-height:1.5;
   font-feature-settings:'cv02','cv03','cv04','cv11';-webkit-font-smoothing:antialiased}
 .mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
 .num{font-variant-numeric:tabular-nums}
-.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--mute);font-weight:500}
+.eyebrow{display:none}
 .mute{color:var(--mute)}
 
 /* ---------- shell ---------- */
 .shell{display:flex;min-height:100vh}
-aside.side{width:236px;flex-shrink:0;color:#fff;position:sticky;top:0;height:100vh;
-  display:flex;flex-direction:column;
-  background:linear-gradient(168deg,#123A63 0%,var(--navy) 42%,#071A33 100%);
-  box-shadow:1px 0 0 rgba(255,255,255,.06) inset, 3px 0 22px rgba(8,25,43,.16)}
-aside.side::after{content:'';position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(420px 200px at 0% 0%, rgba(0,169,206,.16), transparent 65%)}
-aside.side>*{position:relative;z-index:1}
+aside.side{width:230px;flex-shrink:0;color:#fff;position:sticky;top:0;height:100vh;
+  display:flex;flex-direction:column;background:var(--navy)}
 .logo{padding:14px 15px 12px;border-bottom:1px solid rgba(255,255,255,.1);
   display:flex;align-items:center;gap:11px}
 .logo img{width:32px;height:32px;flex-shrink:0;background:#fff;border-radius:7px;padding:3px;
@@ -56,59 +47,54 @@ aside.side>*{position:relative;z-index:1}
   color:rgba(255,255,255,.72);font-size:12.5px;font-weight:500;cursor:pointer;
   text-decoration:none;transition:.12s;white-space:nowrap}
 .side nav a:hover{background:rgba(255,255,255,.06);color:#fff}
-.side nav a.on{background:linear-gradient(100deg,var(--cy),#39C6E2);color:#04222C;font-weight:600;
-  box-shadow:0 2px 10px rgba(0,169,206,.34)}
+.side nav a.on{background:var(--cy);color:#04222C;font-weight:700}
 
 .side nav a .ct{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10px;opacity:.6}
 .sidefoot{padding:10px 12px;border-top:1px solid rgba(255,255,255,.1);font-size:10.5px;
   color:rgba(255,255,255,.45);font-family:'IBM Plex Mono',monospace}
 
 main{flex:1;min-width:0}
-.topbar{background:linear-gradient(180deg,#fff,#FBFCFE);border-bottom:1px solid var(--s200);
+.topbar{background:#fff;border-bottom:1px solid var(--s200);
   padding:11px 26px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
   position:sticky;top:0;z-index:30;backdrop-filter:saturate(1.4) blur(6px)}
 .wrap{padding:22px 26px 90px;max-width:1720px}
-h1.pg{font-size:25px;font-weight:800;letter-spacing:-.028em;margin:3px 0 5px;
-  background:linear-gradient(165deg,var(--ink),#25405B);
-  -webkit-background-clip:text;background-clip:text;color:transparent}
-p.lede{color:var(--mute);font-size:12.5px;line-height:1.65;max-width:940px;margin-bottom:18px}
+h1.pg{font-size:24px;font-weight:700;letter-spacing:-.01em;margin:0 0 6px;color:var(--ink)}
+p.lede{color:var(--body);font-size:14px;line-height:1.65;max-width:940px;margin-bottom:18px}
 p.lede b{color:var(--ink);font-weight:600}
 
 /* ---------- controls ---------- */
-button,.btn{font-family:Inter,sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;
+button,.btn{font-family:Calibri,Carlito,'Segoe UI',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;
   background:var(--s0);color:var(--ink);border:1px solid var(--s300);border-radius:7px;
   padding:7px 12px;transition:.12s;display:inline-flex;align-items:center;gap:6px}
 button:hover{background:var(--s100);border-color:var(--mute)}
-button.pri{background:linear-gradient(180deg,#1CBBDA,var(--cy));border-color:var(--cy-d);color:#03222B;
-  box-shadow:0 1px 2px rgba(0,129,158,.3), 0 0 0 1px rgba(255,255,255,.25) inset}
-button.pri:hover{background:linear-gradient(180deg,var(--cy),var(--cy-d));color:#fff}
+button.pri{background:var(--cy);border-color:var(--cy-d);color:#03222B;font-weight:700}
+button.pri:hover{background:var(--cy-d);color:#fff}
 button.gh{background:none;border-color:transparent}
 button.gh:hover{background:var(--s100)}
 textarea,select,input[type=text],input[type=search],input[type=url],input[type=number]{
   background:var(--s0);border:1px solid var(--s300);color:var(--ink);border-radius:7px;
-  padding:7px 10px;font-family:Inter,sans-serif;font-size:12.5px}
+  padding:7px 10px;font-family:Calibri,Carlito,'Segoe UI',sans-serif;font-size:12.5px}
 select:focus,input:focus,textarea:focus{outline:2px solid var(--cy-l);border-color:var(--cy)}
-textarea{font-family:Inter,sans-serif;line-height:1.5;resize:vertical}
+textarea{font-family:Calibri,Carlito,'Segoe UI',sans-serif;line-height:1.5;resize:vertical}
 label.f{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.13em;
   text-transform:uppercase;color:var(--mute);margin-right:-3px}
 .ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
 
 /* ---------- cards ---------- */
-.card{display:block;width:auto;background:linear-gradient(180deg,#fff,#FCFDFE);
+.card{display:block;width:auto;background:#fff;
   border:1px solid var(--s200);border-radius:var(--r);box-shadow:var(--shadow);padding:17px 18px}
 .card h3{font-size:13.5px;font-weight:700;letter-spacing:-.01em}
-.card .sub{font-size:11px;color:var(--faint);margin-top:3px;margin-bottom:14px;line-height:1.55}
+.card .sub{font-size:12.5px;color:var(--faint);margin-top:3px;margin-bottom:14px;line-height:1.55}
 .card .sub b{color:var(--body);font-weight:600}
 .grid{display:grid;gap:13px}
 section{margin-bottom:8px}
 
 /* ---------- metric card (numbered + defined + drillable) ---------- */
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:12px}
-.kpi{background:linear-gradient(180deg,#fff,#FCFDFE);border:1px solid var(--s200);
+.kpi{background:#fff;border:1px solid var(--s200);
   border-radius:var(--r);box-shadow:var(--shadow);padding:14px 15px;position:relative;
   transition:.15s cubic-bezier(.4,0,.2,1);overflow:hidden}
-.kpi::after{content:'';position:absolute;left:0;right:0;top:0;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.9),transparent)}
+
 .kpi.click{cursor:pointer}
 .kpi.click:hover{border-color:var(--cy);box-shadow:0 6px 20px rgba(11,37,69,.11),0 1px 3px rgba(11,37,69,.07);
   transform:translateY(-2px)}
@@ -117,10 +103,8 @@ section{margin-bottom:8px}
   letter-spacing:.06em}
 .kpi .lab{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.055em;
   color:var(--mute);line-height:1.35;margin-top:4px}
-.kpi .val{font-size:29px;font-weight:700;letter-spacing:-.035em;line-height:1.05;margin-top:8px;
-  font-variant-numeric:tabular-nums;
-  background:linear-gradient(170deg,var(--navy-l),var(--navy) 60%);
-  -webkit-background-clip:text;background-clip:text;color:transparent}
+.kpi .val{font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1.05;margin-top:8px;
+  font-variant-numeric:tabular-nums;color:var(--navy)}
 .kpi .val em{font-style:normal;font-size:14px;font-weight:600;color:var(--mute);margin-left:4px}
 .kpi .den{font-size:11px;color:var(--mute);margin-top:5px;font-variant-numeric:tabular-nums}
 .kpi .arrow{color:var(--s300);font-size:13px;line-height:1}
@@ -146,7 +130,7 @@ th{position:sticky;top:0;background:var(--s100);z-index:5;text-align:left;paddin
   font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
   color:var(--body);border-bottom:1px solid var(--s200);cursor:pointer;white-space:nowrap;font-weight:600}
 th:hover{color:var(--cy-d)}
-td{padding:9px 11px;border-bottom:1px solid var(--s100);vertical-align:top;color:var(--body)}
+td{padding:8px 11px;border-bottom:1px solid var(--s100);vertical-align:top;color:var(--body)}
 td b{color:var(--ink)}
 tbody tr:hover{background:var(--cy-l)}
 tbody tr.click{cursor:pointer}
@@ -209,7 +193,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
   display:flex;flex-direction:column;overflow:hidden;
   box-shadow:-14px 0 50px rgba(8,25,43,.22), -1px 0 0 rgba(255,255,255,.5) inset}
 .drawer.on{transform:translateX(0)}
-.dhead{background:linear-gradient(180deg,#fff,#F9FBFD);border-bottom:1px solid var(--s200);padding:13px 22px;
+.dhead{background:#fff;border-bottom:1px solid var(--s200);padding:13px 22px;
   display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-shrink:0;
   min-width:0;position:relative;z-index:2}
 .dhead>div:first-child{min-width:0;overflow:hidden}
@@ -364,6 +348,10 @@ select[multiple]{padding:5px;font-size:12px}
 .wbsel{font-size:12px;font-weight:600;padding:5px 10px;border-radius:7px;
   border:1px solid var(--cy);background:var(--cy-l);color:var(--navy);cursor:pointer}
 tr.sel{background:var(--cy-l)!important}
+h3.sec{margin:26px 0 4px;font-size:17px;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
+.fnnote{font-size:11.5px;color:var(--faint);font-weight:400;margin-top:2px;line-height:1.4}
+.fnrow .lb{line-height:1.25}
+.hbar .tr{position:relative}
 .hide{display:none!important}
 @media(max-width:1080px){aside.side{display:none}.wrap{padding:18px 15px 80px}
   .hbar .nm{width:130px}.fnrow .lb{width:150px}}
@@ -3833,9 +3821,344 @@ function stagePanel(){
   return h;
 }
 
+/* ============ MARKETING, PARTNER AND CALLING VIEWS ============
+   Three questions the tool could not answer before:
+   where did the leads come from, how is the Talent 500 partnership doing,
+   and what is the calling effort actually producing.                       */
+
+const num0 = v => Math.round(num(v) || 0);
+const sumOf = (rows, k) => rows.reduce((a, r) => a + (num(r[k]) || 0), 0);
+
+/* One funnel, one shape, reused everywhere. Lead generated at the top,
+   because that is where the money starts. */
+function funnelOf(rows){
+  const att   = rows.filter(r => num(r.attended_live) === 1);
+  const later = rows.filter(r => num(r.attended_later) === 1);
+  const reach = rows.filter(r => num(r.Reached) > 0);
+  const conn  = rows.filter(r => num(r.Connected) > 0);
+  const dcd   = rows.filter(r => num(r.DCD_Flag) > 0);
+  const rte   = rows.filter(r => num(r.RTE_Flag) > 0);
+  const enr   = rows.filter(r => S(r.lead_status) === "Enrolled");
+  return [
+    ["Leads generated",      rows,  null,          "Everyone who signed up."],
+    ["Reached on the phone", reach, rows.length,   "Someone picked up or the dialler logged contact."],
+    ["Connected properly",   conn,  rows.length,   "A real connect, not a ring."],
+    ["Came to the webinar",  att,   rows.length,   "Attended on the day itself."],
+    ["Came to a later one",  later, rows.length,   "Signed up for one, turned up at another."],
+    ["Discovery call done",  dcd,   rows.length,   "A proper qualification conversation happened."],
+    ["Ready to enrol",       rte,   rows.length,   "Flagged as ready to buy."],
+    ["Enrolled",             enr,   rows.length,   "Bought."],
+  ];
+}
+function funnelHtml(rows, key){
+  const f = funnelOf(rows);
+  window._FN = window._FN || {}; window._FN[key] = f.map(x => x[1]);
+  const base = rows.length || 1;
+  return `<div class="fn">${f.map(([lab, set, den, note], i) => `
+    <div class="fnrow" onclick="fnDrill('${key}',${i})">
+      <div class="st">${String(i + 1).padStart(2, "0")}</div>
+      <div class="lb">${lab}<div class="fnnote">${note}</div></div>
+      <div class="bx"><i style="width:${Math.max(set.length / base * 100, 1.5)}%"></i><span>${set.length}</span></div>
+      <div class="dl">${den ? pct(set.length, den) : ""}</div>
+    </div>`).join("")}</div>`;
+}
+function fnDrill(key, i){
+  const f = funnelOf((window._FNSRC && window._FNSRC[key]) || UNIV);
+  const [lab, set, , note] = f[i];
+  drill("Funnel", lab, note, set, "univ");
+}
+
+/* ---------------- CAMPAIGNS ---------------- */
+let CMPDIM = "channel";
+const CMP_DIMS = [
+  ["channel",              "Channel"],
+  ["UTM_Campaign",         "Campaign"],
+  ["utm_source",           "Source"],
+  ["utm_medium",           "Medium"],
+  ["cta_page",             "Page they came from"],
+  ["Course_name_from_UTM", "Course in the link"],
+  ["utm_term",             "Search term"],
+  ["utm_content",          "Ad creative"],
+];
+function pageCampaigns(){
+  if(!UNIV.length) return noDB("Campaigns");
+  const dim = CMPDIM;
+  const label = (CMP_DIMS.find(d => d[0] === dim) || [])[1] || dim;
+  const groups = {};
+  UNIV.forEach(r => { const k = S(r[dim]) || "(not set)"; (groups[k] = groups[k] || []).push(r) });
+  const rows = Object.entries(groups).map(([k, g]) => {
+    const att = g.filter(r => num(r.attended_live) === 1).length;
+    const enr = g.filter(r => S(r.lead_status) === "Enrolled").length;
+    return { k, g, leads: g.length,
+      reached: g.filter(r => num(r.Reached) > 0).length,
+      connected: g.filter(r => num(r.Connected) > 0).length,
+      attended: att, dcd: sumOf(g, "DCD_Flag"), rte: sumOf(g, "RTE_Flag"),
+      enrolled: enr, mins: Math.round(sumOf(g, "total_tt")),
+      showRate: g.length ? att / g.length : 0,
+      enrRate: g.length ? enr / g.length : 0 };
+  }).sort((a, b) => b.leads - a.leads);
+  window._CMP = rows.map(r => r.g);
+  window._FNSRC = window._FNSRC || {}; window._FNSRC.cmp = UNIV;
+
+  let h = `<section><h1 class="pg">Where the leads come from</h1>
+   <p class="lede">${UNIV.length} leads for <b>${esc((wbCurrent()||{}).label||"this webinar")}</b>, cut whichever way is useful.
+   Show rate is the number that separates a good source from a cheap one.</p>
+   <div class="ctl">
+     <label class="f">Cut by</label>
+     <select onchange="CMPDIM=this.value;render()">
+       ${CMP_DIMS.map(([k, l]) => `<option value="${k}" ${dim===k?"selected":""}>${l}</option>`).join("")}
+     </select>
+     <span class="mute">${rows.length} distinct ${esc(label.toLowerCase())}${rows.length===1?"":"s"}</span>
+   </div>`;
+
+  h += `<div class="tw"><table><thead><tr>
+    <th>${esc(label)}</th><th class="n">Leads</th><th class="n">Share</th><th class="n">Reached</th>
+    <th class="n">Connected</th><th class="n">Came</th><th class="n">Show rate</th>
+    <th class="n">Discovery</th><th class="n">Ready</th><th class="n">Enrolled</th><th class="n">Minutes</th>
+    </tr></thead><tbody>`;
+  rows.forEach((r, i) => {
+    const good = r.showRate >= 0.55, bad = r.showRate < 0.35 && r.leads >= 10;
+    h += `<tr class="click" onclick="cmpOpen(${i})">
+      <td><b>${esc(r.k)}</b></td>
+      <td class="n"><b>${r.leads}</b></td>
+      <td class="n">${pct(r.leads, UNIV.length)}</td>
+      <td class="n">${r.reached}</td><td class="n">${r.connected}</td>
+      <td class="n">${r.attended}</td>
+      <td class="n" style="color:${good?"var(--grn)":bad?"var(--red)":"inherit"};font-weight:${good||bad?700:400}">
+        ${(r.showRate*100).toFixed(0)}%</td>
+      <td class="n">${r.dcd}</td><td class="n">${r.rte}</td>
+      <td class="n">${r.enrolled||""}</td><td class="n">${r.mins}</td></tr>`;
+  });
+  h += `</tbody></table></div>`;
+
+  h += `<h3 class="sec">The funnel for everyone</h3>
+   <p class="lede">Lead generated at the top, because that is where the spend goes.</p>
+   ${funnelHtml(UNIV, "cmp")}`;
+
+  const top = rows.slice(0, 6);
+  if(top.length > 1){
+    h += `<h3 class="sec">Show rate, biggest sources first</h3>
+     <div class="card"><div class="sub">How many of the leads each source sent actually turned up.
+     Volume without attendance is the expensive kind.</div>`;
+    const mx = Math.max(...top.map(r => r.leads));
+    top.forEach(r => {
+      h += `<div class="hbar"><div class="nm">${esc(r.k)}</div>
+        <div class="tr"><i style="width:${r.leads/mx*100}%;background:var(--s300)"></i>
+          <i style="width:${r.attended/mx*100}%;background:var(--cy);position:absolute;left:0;top:0"></i></div>
+        <div class="vn">${r.attended} of ${r.leads} · ${(r.showRate*100).toFixed(0)}%</div></div>`;
+    });
+    h += `</div>`;
+  }
+  return h + "</section>";
+}
+function cmpOpen(i){
+  const g = window._CMP[i];
+  drill("Campaigns", S(g[0][CMPDIM]) || "(not set)",
+    `${g.length} leads from this ${(CMP_DIMS.find(d=>d[0]===CMPDIM)||[])[1]||CMPDIM}.`, g, "univ");
+}
+
+/* ---------------- TALENT 500 ---------------- */
+function t500Rows(){
+  const all = ALLUNIV.length ? ALLUNIV : UNIV;
+  return all.filter(r => /talent/i.test(S(r.channel)) || /talent/i.test(S(r.UTM_Campaign)));
+}
+function pageTalent500(){
+  const t = t500Rows();
+  if(!t.length) return `<section><h1 class="pg">Talent 500</h1>
+    <p class="lede">No Talent 500 leads in the data currently loaded.</p></section>`;
+  const all = ALLUNIV.length ? ALLUNIV : UNIV;
+  const rest = all.filter(r => !t.includes(r));
+  window._FNSRC = window._FNSRC || {}; window._FNSRC.t500 = t;
+  window._T5 = { all: t, rest };
+
+  const stat = (rows, k) => {
+    const att = rows.filter(r => num(r.attended_live) === 1).length;
+    return { leads: rows.length, att,
+      show: rows.length ? att / rows.length : 0,
+      reach: rows.filter(r => num(r.Reached) > 0).length,
+      conn: rows.filter(r => num(r.Connected) > 0).length,
+      dcd: sumOf(rows, "DCD_Flag"), rte: sumOf(rows, "RTE_Flag"),
+      enr: rows.filter(r => S(r.lead_status) === "Enrolled").length,
+      mins: Math.round(sumOf(rows, "total_tt")) };
+  };
+  const A = stat(t), B = stat(rest);
+
+  let h = `<section><h1 class="pg">Talent 500</h1>
+   <p class="lede">Our affiliate partner, and the single biggest source in the file —
+   <b>${t.length} of ${all.length} leads</b>, ${pct(t.length, all.length)} of everything.
+   End to end, lead generated through to enrolled.</p>
+
+   <div class="kpis">
+     ${kpi_raw("T1","Leads sent",A.leads,`${pct(A.leads,all.length)} of all leads`,"a")}
+     ${kpi_raw("T2","Turned up",A.att,`${(A.show*100).toFixed(0)}% show rate`,A.show>=B.show?"g":"w")}
+     ${kpi_raw("T3","Discovery calls",A.dcd,`${pct(A.dcd,A.leads)} of their leads`,"a")}
+     ${kpi_raw("T4","Ready to enrol",A.rte,`${pct(A.rte,A.leads)} of their leads`,"a")}
+     ${kpi_raw("T5","Enrolled",A.enr,A.enr?`${pct(A.enr,A.leads)} of their leads`:"none yet",A.enr?"g":"r")}
+     ${kpi_raw("T6","Minutes spent on them",A.mins,`${(A.mins/Math.max(A.leads,1)).toFixed(1)} per lead`,"a")}
+   </div>
+
+   <h3 class="sec">Talent 500 against everything else</h3>
+   <p class="lede">Same measures both sides. Where the two columns differ is where the partnership is
+   actually earning or costing.</p>
+   <div class="tw"><table><thead><tr>
+     <th>Measure</th><th class="n">Talent 500</th><th class="n">Rate</th>
+     <th class="n">Everyone else</th><th class="n">Rate</th><th>What it says</th>
+     </tr></thead><tbody>`;
+  const cmpRow = (lab, a, b, note) => `<tr>
+    <td><b>${lab}</b></td>
+    <td class="n">${a}</td><td class="n">${pct(a, A.leads)}</td>
+    <td class="n">${b}</td><td class="n">${pct(b, B.leads)}</td>
+    <td class="mute" style="max-width:400px">${note}</td></tr>`;
+  h += cmpRow("Leads", A.leads, B.leads, "Volume. Talent 500 is the majority of the file.");
+  h += cmpRow("Reached", A.reach, B.reach, "Whether the number they gave us works.");
+  h += cmpRow("Connected", A.conn, B.conn, "Whether they answer.");
+  h += cmpRow("Came to the webinar", A.att, B.att, "The clearest measure of lead quality.");
+  h += cmpRow("Discovery call done", A.dcd, B.dcd, "Whether the conversation gets anywhere.");
+  h += cmpRow("Ready to enrol", A.rte, B.rte, "Genuine intent.");
+  h += cmpRow("Enrolled", A.enr, B.enr, "Money.");
+  h += `</tbody></table></div>`;
+
+  h += `<h3 class="sec">The Talent 500 funnel</h3>${funnelHtml(t, "t500")}`;
+
+  // by webinar
+  const byW = {};
+  t.forEach(r => { const k = S(r.webinar_batch) || "Unknown"; (byW[k] = byW[k] || []).push(r) });
+  if(Object.keys(byW).length > 1){
+    h += `<h3 class="sec">Webinar by webinar</h3>
+     <p class="lede">Whether the quality is holding as volume grows.</p>
+     <div class="tw"><table><thead><tr><th>Webinar</th><th class="n">Leads</th><th class="n">Came</th>
+     <th class="n">Show rate</th><th class="n">Discovery</th><th class="n">Ready</th><th class="n">Enrolled</th>
+     </tr></thead><tbody>`;
+    Object.entries(byW).forEach(([k, g]) => {
+      const s = stat(g);
+      h += `<tr><td><b>${esc(k)}</b></td><td class="n">${s.leads}</td><td class="n">${s.att}</td>
+        <td class="n"><b>${(s.show*100).toFixed(0)}%</b></td>
+        <td class="n">${s.dcd}</td><td class="n">${s.rte}</td><td class="n">${s.enr||""}</td></tr>`;
+    });
+    h += `</tbody></table></div>`;
+  }
+
+  // who they send
+  h += `<h3 class="sec">Who they send</h3>
+   <p class="lede">The profile of a Talent 500 lead, next to everyone else. This is what to take into the
+   next partner conversation.</p>
+   <div class="grid" style="grid-template-columns:1fr 1fr">`;
+  [["work_ex", "Years of experience"], ["role_domain", "Role"],
+   ["city", "City"], ["interview_start_time", "When they want to interview"]].forEach(([k, lab]) => {
+    const c = {}; t.forEach(r => { const v = S(r[k]) || "(not set)"; c[v] = (c[v]||0)+1 });
+    const e = Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,7);
+    const mx = Math.max(...e.map(x=>x[1]), 1);
+    h += `<div class="card"><h3>${lab}</h3>`;
+    e.forEach(([v, n]) => {
+      h += `<div class="hbar"><div class="nm">${esc(v)}</div>
+        <div class="tr"><i style="width:${n/mx*100}%;background:var(--cy)"></i></div>
+        <div class="vn">${n} · ${pct(n, t.length)}</div></div>`;
+    });
+    h += `</div>`;
+  });
+  h += `</div>`;
+
+  h += `<div class="card" style="margin-top:16px"><h3>What to raise with them</h3>
+   <div class="sub" style="margin:0;line-height:1.9">
+     ${A.show >= B.show
+       ? `Their show rate of <b>${(A.show*100).toFixed(0)}%</b> is at or above the rest of the file
+          (${(B.show*100).toFixed(0)}%). The volume is not coming at the cost of quality — worth saying so.`
+       : `Their show rate is <b>${(A.show*100).toFixed(0)}%</b> against <b>${(B.show*100).toFixed(0)}%</b> everywhere else.
+          On ${A.leads} leads that gap is the conversation to have.`}<br>
+     ${A.enr === 0
+       ? `<b style="color:var(--red)">No enrolments yet from ${A.leads} leads.</b> Either the profile is wrong or the
+          pitch is. Check the call scores for their leads before blaming the source.`
+       : `<b>${A.enr} enrolment${A.enr===1?"":"s"}</b> so far, ${pct(A.enr, A.leads)} of what they sent.`}<br>
+     We have spent <b>${A.mins} minutes</b> on the phone to these leads. That is the real cost of the partnership,
+     alongside whatever is paid per lead.
+   </div></div>`;
+  return h + "</section>";
+}
+
+/* ---------------- CALLING ---------------- */
+function pageCalling(){
+  if(!UNIV.length) return noDB("Calling");
+  const R = UNIV;
+  const preA = sumOf(R, "pre_webinar_attempt"),  preC = sumOf(R, "pre_webinar_connect"),  preT = sumOf(R, "pre_webinar_tt");
+  const posA = sumOf(R, "post_webinar_attempt"), posC = sumOf(R, "post_webinar_connect"), posT = sumOf(R, "post_webinar_tt");
+  const withPre = R.filter(r => num(r.pre_webinar_attempt) > 0);
+  const withPost = R.filter(r => num(r.post_webinar_attempt) > 0);
+  const noPost = R.filter(r => num(r.post_webinar_attempt) === 0);
+  const attNoPost = R.filter(r => num(r.attended_live) === 1 && num(r.post_webinar_attempt) === 0);
+  window._CALL = { withPre, withPost, noPost, attNoPost };
+
+  let h = `<section><h1 class="pg">Calling effort</h1>
+   <p class="lede">What the dialling is actually producing, split either side of the webinar.
+   Before the webinar the job is to get them to turn up. After it, the job is to sell.</p>
+
+   <div class="grid" style="grid-template-columns:1fr 1fr">
+   <div class="card"><h3>Before the webinar</h3>
+     <div class="sub">Reminder calls and first contact. ${withPre.length} of ${R.length} leads were dialled at least once.</div>
+     <div class="tw" style="box-shadow:none;max-height:none"><table><tbody>
+       <tr><td>Dials</td><td class="n"><b>${num0(preA)}</b></td><td class="n mute">${(preA/Math.max(R.length,1)).toFixed(1)} per lead</td></tr>
+       <tr><td>Connects</td><td class="n"><b>${num0(preC)}</b></td><td class="n mute">${pct(preC, preA)} of dials</td></tr>
+       <tr><td>Minutes</td><td class="n"><b>${num0(preT)}</b></td><td class="n mute">${(preT/Math.max(preC,1)).toFixed(1)} per connect</td></tr>
+       <tr><td>Leads dialled</td><td class="n"><b>${withPre.length}</b></td><td class="n mute">${pct(withPre.length, R.length)}</td></tr>
+     </tbody></table></div>
+     <button onclick="drill('Calling','Dialled before the webinar','At least one attempt before the webinar.',window._CALL.withPre,'univ')">See them</button>
+   </div>
+   <div class="card" style="border-left:3px solid ${posA < preA/3 ? "var(--red)" : "var(--cy)"}">
+     <h3>After the webinar</h3>
+     <div class="sub">Where the selling happens. ${withPost.length} of ${R.length} leads have been dialled since.</div>
+     <div class="tw" style="box-shadow:none;max-height:none"><table><tbody>
+       <tr><td>Dials</td><td class="n"><b>${num0(posA)}</b></td><td class="n mute">${(posA/Math.max(R.length,1)).toFixed(1)} per lead</td></tr>
+       <tr><td>Connects</td><td class="n"><b>${num0(posC)}</b></td><td class="n mute">${pct(posC, posA)} of dials</td></tr>
+       <tr><td>Minutes</td><td class="n"><b>${num0(posT)}</b></td><td class="n mute">${(posT/Math.max(posC,1)).toFixed(1)} per connect</td></tr>
+       <tr><td>Leads dialled</td><td class="n"><b>${withPost.length}</b></td><td class="n mute">${pct(withPost.length, R.length)}</td></tr>
+     </tbody></table></div>
+     <button onclick="drill('Calling','Dialled after the webinar','At least one attempt since the webinar.',window._CALL.withPost,'univ')">See them</button>
+   </div></div>`;
+
+  h += `<div class="callout ${attNoPost.length ? "" : "ok"}" style="margin-top:16px">
+    <h4>${attNoPost.length} people came to the webinar and have not been called since</h4>
+    <p>Attending is the strongest buying signal in the file and it fades within days.
+    ${attNoPost.length ? `Post-webinar dialling is <b>${(posA/Math.max(preA,1)*100).toFixed(0)}%</b> of pre-webinar
+    dialling — the effort goes into getting people to show up, then stops at the point they are most interested.`
+    : "Every attendee has been followed up."}</p>
+    ${attNoPost.length ? `<button class="pri" style="margin-top:10px" onclick="drill('Calling','Came, never called since','Attended the webinar with zero post-webinar attempts.',window._CALL.attNoPost,'univ')">Call these</button>` : ""}
+  </div>`;
+
+  // by advisor
+  const byPA = {};
+  R.forEach(r => { const k = S(r.pa_name_final) || "UNASSIGNED"; (byPA[k] = byPA[k] || []).push(r) });
+  const paRows = Object.entries(byPA).map(([k, g]) => ({
+    k, g, leads: g.length,
+    preA: sumOf(g, "pre_webinar_attempt"), preC: sumOf(g, "pre_webinar_connect"),
+    posA: sumOf(g, "post_webinar_attempt"), posC: sumOf(g, "post_webinar_connect"),
+    mins: Math.round(sumOf(g, "total_tt")),
+    att: g.filter(r => num(r.attended_live) === 1).length,
+  })).sort((a, b) => b.leads - a.leads);
+  window._CPA = paRows.map(r => r.g);
+
+  h += `<h3 class="sec">By advisor</h3>
+   <p class="lede">Dials either side of the webinar, per person. A big pre-webinar number with a small
+   post-webinar one means the follow-through is missing, not the effort.</p>
+   <div class="tw"><table><thead><tr>
+     <th>Advisor</th><th class="n">Leads</th><th class="n">Dials before</th><th class="n">Connects before</th>
+     <th class="n">Came</th><th class="n">Dials after</th><th class="n">Connects after</th>
+     <th class="n">After vs before</th><th class="n">Minutes</th></tr></thead><tbody>`;
+  paRows.forEach((r, i) => {
+    const ratio = r.preA ? r.posA / r.preA : 0;
+    h += `<tr class="click" onclick="drill('Calling','${esc(r.k)}','Every lead assigned to this advisor.',window._CPA[${i}],'univ')">
+      <td><b>${esc(r.k)}</b></td><td class="n">${r.leads}</td>
+      <td class="n">${num0(r.preA)}</td><td class="n">${num0(r.preC)}</td>
+      <td class="n">${r.att}</td>
+      <td class="n">${num0(r.posA)}</td><td class="n">${num0(r.posC)}</td>
+      <td class="n" style="color:${ratio<0.2?"var(--red)":ratio>0.5?"var(--grn)":"inherit"}">${(ratio*100).toFixed(0)}%</td>
+      <td class="n">${r.mins}</td></tr>`;
+  });
+  h += `</tbody></table></div>`;
+  return h + "</section>";
+}
+
 /* ============ NAV ============ */
 const TABS=[
- ["THE PICTURE",[["lead","Summary"],["webinars","Webinars"],["webinar","Webinar view"],["funnel","Funnel"],["explore","Explore"],["plan","Do this next"],["scen","Lead states"]]],
+ ["THE PICTURE",[["lead","Summary"],["webinars","Webinars"],["webinar","Webinar view"],["campaigns","Where leads come from"],["t500","Talent 500"],["calling","Calling effort"],["funnel","Funnel"],["explore","Explore"],["plan","Do this next"],["scen","Lead states"]]],
  ["THE TEAM",[["coach","PA coach"],["org","FDE org chart"],["pa","Advisors"],["discipline","Wrong info given"],["voice","What leads said"]]],
  ["THE LEADS",[["queue","Call list"],["noshow","No shows"],["noniql","Non-IQL leads"],["upsell","Existing students"],["segments","Groups"],["leads","Every lead"]]],
  ["KEEP IT FRESH",[["analyse","Call analysis"],["rec","Recordings"],["cover","Coverage & uploads"],["audit","What changed"],["trend","Track progress"],["upload","Upload data"]]],
@@ -3846,6 +4169,7 @@ const TABCOUNT=()=>({
  discipline:UNIV.filter(r=>num(r.message_defect_count)>0).length, pa:new Set(VIEW.map(r=>r.pa_name_final)).size,
  noniql:NONIQL.length, coach:CARDS.length,
  explore:UNIV.length, webinar:UNIV.length, webinars:WBIDX.length,
+ campaigns:UNIV.length, t500:t500Rows().length, calling:UNIV.length,
  analyse:0, audit:(AUDIT&&AUDIT.moved?AUDIT.moved.length:0)||undefined, org:ORG.meta.total, cover:COVERAGE.todo,
 
  upsell:UNIV.filter(r=>num(r.existing_student)===1&&num(r.enrolled_in_fde)===0).length});
@@ -3977,6 +4301,7 @@ function pageLead(){
     const eOTH=UNIV.filter(r=>r.enrolment_type==="NEW_SALE_OTHER_COURSE");
     const eUND=UNIV.filter(r=>r.enrolment_type==="UNDATED_ENROLMENT");
     window._CB={live,offd,eFDE,eOTH,eUND};
+    window._FNSRC=window._FNSRC||{}; window._FNSRC.sum=UNIV;
     const aband=nsAll.filter(r=>r.followup_state==="ABANDONED_SINCE_WEBINAR");
     const eng=nsAll.filter(r=>r.noshow_type==="ENGAGED_NO_SHOW");
     const nw=UNIV.filter(r=>r.scenario==="S10_ATTENDED_NEVER_WORKED");
@@ -3985,6 +4310,12 @@ function pageLead(){
     h+=`<div class="card" style="margin-top:16px;border-left:3px solid var(--cy)">
       <h3>3 · The full picture, and what section 1 is <em>not</em> counting</h3>
       <div class="sub">${UNIV.length} people signed up. Section 1 only covers the ${n} whose calls we have read. Everything below is outside that — and mostly untouched.</div>
+      <h3 class="sec" style="margin-top:0">The funnel</h3>
+      <p class="lede">Lead generated at the top, enrolled at the bottom. Every step is out of the leads who
+      signed up for this webinar. Click any row to see them.</p>
+      ${funnelHtml(UNIV,"sum")}
+      <h3 class="sec">Who we can and cannot see</h3>
+      <p class="lede">Everything scored further down describes only the calls we have read. This is what that leaves out.</p>
       <div class="fn" style="margin-bottom:16px">
         ${[["Signed up for this webinar",UNIV.length,null,"univ"],
            ["Came to the live webinar",live.length,UNIV.length,"live"],
@@ -5274,7 +5605,8 @@ async function loadSeed(){
 
 function render(){
   applyFilters();applyNSFilters();renderNav();
-  const P={lead:pageLead,webinars:pageWebinars,audit:pageAudit,webinar:pageWebinar,funnel:pageFunnel,explore:pageExplore,plan:pagePlan,scen:pageScen,coach:pageCoach,org:pageOrg,pa:pagePA,discipline:pageDisc,
+  const P={lead:pageLead,webinars:pageWebinars,audit:pageAudit,webinar:pageWebinar,
+   campaigns:pageCampaigns,t500:pageTalent500,calling:pageCalling,funnel:pageFunnel,explore:pageExplore,plan:pagePlan,scen:pageScen,coach:pageCoach,org:pageOrg,pa:pagePA,discipline:pageDisc,
    voice:pageVoice,queue:pageQueue,noshow:pageNoShow,noniql:pageNonIQL,upsell:pageUpsell,segments:pageSeg,
    leads:pageLeads,analyse:pageCallAnalysis,rec:pageRecordings,
    cover:pageCoverage,trend:pageTrend,upload:pageUpload};

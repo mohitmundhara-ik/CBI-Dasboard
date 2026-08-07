@@ -348,6 +348,17 @@ select[multiple]{padding:5px;font-size:12px}
 .wbsel{font-size:12px;font-weight:600;padding:5px 10px;border-radius:7px;
   border:1px solid var(--cy);background:var(--cy-l);color:var(--navy);cursor:pointer}
 tr.sel{background:var(--cy-l)!important}
+.reslot{display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--s100)}
+.reslot:last-of-type{border-bottom:none}
+.reslot.empty{background:var(--s50);margin:0 -18px;padding:11px 18px;border-bottom:1px solid var(--s100)}
+.reslot.editing{background:var(--cy-l);margin:0 -18px;padding:14px 18px;border-radius:8px}
+.reslink{font-size:14px;font-weight:700;color:var(--navy);text-decoration:none}
+.reslink:hover{color:var(--cy-d);text-decoration:underline}
+.resnote{font-size:12px;color:var(--mute);margin-top:2px;line-height:1.45}
+.resurl{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--faint);margin-top:3px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fbnote{border-bottom:1px solid var(--s100);padding:11px 0}
+.fbnote:last-child{border-bottom:none}
 h3.sec{margin:26px 0 4px;font-size:17px;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
 .fnnote{font-size:11.5px;color:var(--faint);font-weight:400;margin-top:2px;line-height:1.4}
 .fnrow .lb{line-height:1.25}
@@ -4156,9 +4167,332 @@ function pageCalling(){
   return h + "</section>";
 }
 
+/* ============ RESOURCES — the home ground for everything FDE ============
+   Links, decks, recordings, transcripts, poll reports and research in one
+   place. Anything not supplied yet shows as an empty slot that says so,
+   rather than quietly not existing. Everything added is saved locally. */
+
+let RES = null;          // the live shelf
+let RESEDIT = null;      // {section, id} while a slot is being filled
+let FEEDBACK = [];       // PA feedback entries
+
+/* What the shelf looks like out of the box. Anything with no url is an empty
+   slot and renders as a prompt. */
+function resDefaults(){
+  return {
+    product: {
+      name: "Product and positioning",
+      note: "The things that define what we are selling. Everything else is downstream of these.",
+      items: [
+        {id:"plan",     label:"FDE Project Plan",       url:"https://docs.google.com/spreadsheets/d/17RpRc50I_7UwiLtzxzFhCpWHYCwUTR1LXOu1LpppwkU/edit?gid=1611252078#gid=1611252078", note:"Ownership, timelines, milestones, dependencies"},
+        {id:"kyp",      label:"Program KYP",            url:"https://uplevel-watch.atlassian.net/wiki/spaces/CUR/pages/3284959263/Forward+Deployed+Engineer+India", note:"The content authority. Every curriculum claim is checked against this"},
+        {id:"lp",       label:"Landing Page",           url:"https://interviewkickstart.com/in/landing/courses/forward-deployed-ai-engineering", note:"Where paid traffic arrives"},
+        {id:"course",   label:"Course Page",            url:"https://interviewkickstart.com/in/courses/forward-deployed-ai-engineering", note:"Where organic traffic arrives"},
+        {id:"brochure", label:"Brochure",               url:"https://fde-brochure.vercel.app/", note:"The web version"},
+        {id:"brochpdf", label:"Brochure PDF",           url:"https://drive.google.com/file/d/1TasiO1hx2aqBHUwIpmtp1vVcm329Wtds/view", note:"The version that gets sent"},
+        {id:"pricing",  label:"Approved price and discount rule", url:"", note:"Not added yet. Every price flag in this tool assumes a number nobody has confirmed in writing"},
+      ],
+    },
+    sales: {
+      name: "Sales enablement",
+      note: "What an advisor needs in front of them on a call.",
+      items: [
+        {id:"deck",     label:"Sales Training Deck",    url:"https://fde-sales-india.vercel.app/", note:""},
+        {id:"playbook", label:"FDE India Sales Playbook", url:"https://docs.google.com/document/d/1Yrvebj2SoSLx7luWatxHbc4Ryj2aYMqX1FpE-s_5jc8/", note:""},
+        {id:"objection",label:"Objection handling sheet", url:"", note:"Not added yet"},
+        {id:"faq",      label:"Sales FAQ",              url:"", note:"Not added yet"},
+        {id:"briefing", label:"Sales briefing from the 29 July calls", url:"", note:"Built in this session as an xlsx. Paste the Drive link once it is uploaded"},
+      ],
+    },
+    research: {
+      name: "Research",
+      note: "The evidence base. US work is reference; India work is what we act on.",
+      items: [
+        {id:"launchctl", label:"Launch Control (US)",    url:"", note:"Not added yet"},
+        {id:"usroadmap", label:"US FDE Roadmap",         url:"", note:"Not added yet"},
+        {id:"indiamkt",  label:"India Market Assessment", url:"", note:"Not added yet"},
+        {id:"indiapos",  label:"India Positioning",      url:"", note:"Not added yet"},
+        {id:"jobads",    label:"FDE job-ad scrape",      url:"", note:"394 postings. Already inside this tool on the org chart page — paste the source file link"},
+        {id:"comp",      label:"Competitor tracking",    url:"", note:"Not added yet. Scaler, Futurense and fde.academy at minimum"},
+      ],
+    },
+    crm: {
+      name: "Data and CRM",
+      note: "Where the numbers in this dashboard come from.",
+      items: [
+        {id:"livedb",  label:"FDE Live DB (Google Sheet)", url:"https://docs.google.com/spreadsheets/d/1XBqBzpnpemBJVHAt74AQq-1aSHn5A3808YRr-Q0JOQw/edit", note:"The BigQuery-backed connected sheet this dashboard reads"},
+        {id:"repo",    label:"Dashboard repo",            url:"https://github.com/mohitmundhara-ik/CBI-Dasboard", note:""},
+        {id:"vercel",  label:"Dashboard (live)",          url:"https://cbi-dashboard-ik.vercel.app/", note:""},
+        {id:"agent",   label:"Call analysis agent",       url:"https://call-analysis-agent-841321224682.us-central1.run.app/app/", note:""},
+        {id:"agentdoc",label:"Call analysis user guide",  url:"https://docs.google.com/document/d/1EjMjtm7WHMOKgIqXYiojKHMJeC_fwqwTS48Y8DFinwA/edit", note:""},
+      ],
+    },
+  };
+}
+/* Per-webinar assets. Slots exist whether or not they are filled, so a gap
+   is visible instead of invisible. */
+const WSLOTS = [
+  ["deck",      "Deck used"],
+  ["recording", "Webinar recording"],
+  ["transcript","Transcript"],
+  ["chat",      "Chat and Q&A"],
+  ["poll",      "Poll results"],
+  ["attendees", "Attendee list"],
+  ["feedback",  "Attendee feedback"],
+  ["analysis",  "Call analysis file"],
+];
+function resWebinarDefaults(){
+  return {
+    "2026-07-29": {
+      label: "29 July 2026 · FDE Masterclass",
+      slots: {
+        deck: {url:"", note:"The 46-slide interactive deck"},
+        chat: {url:"https://docs.google.com/document/d/1JRextjARNgvOzzBKbDQqox0e7TrP9wMqGd_hmXOuouU/edit?tab=t.0", note:""},
+        recording:{url:"",note:""}, transcript:{url:"",note:""}, poll:{url:"",note:""},
+        attendees:{url:"",note:""}, feedback:{url:"",note:""}, analysis:{url:"",note:"135 calls read so far"},
+      },
+    },
+    "2026-08-06": {
+      label: "6 August 2026 · FDE Masterclass",
+      slots: {
+        deck: {url:"https://fde-brochure.vercel.app/", note:"Same as the brochure deck"},
+        recording:{url:"",note:""}, transcript:{url:"",note:""}, chat:{url:"",note:""},
+        poll:{url:"",note:""}, attendees:{url:"",note:""}, feedback:{url:"",note:""},
+        analysis:{url:"",note:"No calls read yet"},
+      },
+    },
+  };
+}
+
+async function resLoad(){
+  try{
+    const r = await window.storage.get("cbi:resources");
+    RES = r && r.value ? JSON.parse(r.value) : {shelf: resDefaults(), webinars: resWebinarDefaults()};
+    // new default slots should appear even on an old saved shelf
+    const d = resDefaults();
+    Object.keys(d).forEach(k=>{
+      if(!RES.shelf[k]) RES.shelf[k]=d[k];
+      else d[k].items.forEach(it=>{ if(!RES.shelf[k].items.some(x=>x.id===it.id)) RES.shelf[k].items.push(it) });
+    });
+    const w = resWebinarDefaults();
+    Object.keys(w).forEach(k=>{ if(!RES.webinars[k]) RES.webinars[k]=w[k] });
+  }catch(e){ RES = {shelf: resDefaults(), webinars: resWebinarDefaults()} }
+  try{
+    const f = await window.storage.get("cbi:feedback");
+    FEEDBACK = f && f.value ? JSON.parse(f.value) : [];
+  }catch(e){ FEEDBACK = [] }
+}
+async function resSave(){
+  try{ await window.storage.set("cbi:resources", JSON.stringify(RES)) }
+  catch(e){ alert("Could not save — the browser refused storage. The link will vanish on reload.") }
+}
+function resEdit(section, id){ RESEDIT = {section, id}; render() }
+function resCancel(){ RESEDIT = null; render() }
+async function resApply(){
+  if(!RESEDIT) return;
+  const url = ($("resUrl")?.value || "").trim();
+  const note = ($("resNote")?.value || "").trim();
+  const {section, id} = RESEDIT;
+  if(section.startsWith("wb:")){
+    const day = section.slice(3);
+    RES.webinars[day].slots[id] = {url, note};
+  } else {
+    const it = RES.shelf[section].items.find(x=>x.id===id);
+    if(it){ it.url = url; if(note) it.note = note }
+  }
+  RESEDIT = null;
+  await resSave();
+  render();
+}
+async function resAddItem(section){
+  const label = prompt("What is it called?"); if(!label) return;
+  const url = prompt("Paste the link (leave blank to add it later)") || "";
+  RES.shelf[section].items.push({id:"c"+Date.now(), label, url, note:""});
+  await resSave(); render();
+}
+async function resRemove(section, id){
+  if(!confirm("Remove this from the shelf?")) return;
+  if(section.startsWith("wb:")) RES.webinars[section.slice(3)].slots[id] = {url:"",note:""};
+  else RES.shelf[section].items = RES.shelf[section].items.filter(x=>x.id!==id);
+  await resSave(); render();
+}
+async function resAddWebinar(){
+  const day = prompt("Webinar date, as YYYY-MM-DD"); if(!day) return;
+  const label = prompt("What should it be called?") || day;
+  RES.webinars[day] = {label, slots:{}};
+  WSLOTS.forEach(([k])=>RES.webinars[day].slots[k]={url:"",note:""});
+  await resSave(); render();
+}
+
+/* ---------- PA feedback ---------- */
+async function fbAdd(){
+  const pa   = ($("fbPa")?.value||"").trim();
+  const topic= ($("fbTopic")?.value||"").trim();
+  const text = ($("fbText")?.value||"").trim();
+  if(!pa||!text){ alert("Needs at least a name and the feedback itself."); return }
+  FEEDBACK.unshift({at:new Date().toISOString(), pa, topic, text,
+                    webinar:(wbCurrent()||{}).label||"", by:(typeof ME!=="undefined"&&ME)?ME.email:""});
+  try{ await window.storage.set("cbi:feedback", JSON.stringify(FEEDBACK.slice(0,500))) }catch(e){}
+  render();
+}
+async function fbRemove(i){
+  if(!confirm("Delete this note?")) return;
+  FEEDBACK.splice(i,1);
+  try{ await window.storage.set("cbi:feedback", JSON.stringify(FEEDBACK)) }catch(e){}
+  render();
+}
+function fbExport(){
+  if(!FEEDBACK.length) return;
+  const cols=["at","pa","topic","webinar","text","by"];
+  const q=v=>`"${S(v).replace(/"/g,'""')}"`;
+  const csv=[["When","Advisor","Topic","Webinar","Feedback","Logged by"].join(",")]
+    .concat(FEEDBACK.map(f=>cols.map(c=>q(f[c])).join(","))).join("\n");
+  const b=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(b);
+  a.download=`CBI_PA_feedback_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+}
+
+/* ---------- the page ---------- */
+function slotRow(section, id, label, url, note){
+  const editing = RESEDIT && RESEDIT.section===section && RESEDIT.id===id;
+  if(editing){
+    return `<div class="reslot editing">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:14px;margin-bottom:7px">${esc(label)}</div>
+        <div class="ctl" style="margin:0">
+          <input type="url" id="resUrl" placeholder="Paste the link" value="${esc(url||"")}" style="min-width:400px">
+          <input type="text" id="resNote" placeholder="A note, optional" value="${esc(note||"")}" style="min-width:220px">
+          <button class="pri" onclick="resApply()">Save</button>
+          <button onclick="resCancel()">Cancel</button>
+        </div></div></div>`;
+  }
+  if(url){
+    return `<div class="reslot">
+      <div style="flex:1;min-width:0">
+        <a href="${esc(url)}" target="_blank" rel="noopener" class="reslink">${esc(label)}</a>
+        ${note?`<div class="resnote">${esc(note)}</div>`:""}
+        <div class="resurl">${esc(url.replace(/^https?:\/\//,"").slice(0,86))}${url.length>93?"…":""}</div>
+      </div>
+      <button class="gh" onclick="resEdit('${section}','${id}')">edit</button>
+      <button class="gh" onclick="resRemove('${section}','${id}')">remove</button>
+    </div>`;
+  }
+  return `<div class="reslot empty">
+    <div style="flex:1;min-width:0">
+      <div style="font-weight:700;font-size:14px;color:var(--mute)">${esc(label)}</div>
+      <div class="resnote" style="color:var(--amb)">${esc(note||"Not added yet")}</div>
+    </div>
+    <button class="pri" onclick="resEdit('${section}','${id}')">Add the link</button>
+  </div>`;
+}
+
+function pageResources(){
+  if(!RES) return `<section><h1 class="pg">Resources</h1><p class="lede">Loading…</p></section>`;
+  const shelf = RES.shelf, wbs = RES.webinars;
+  let filled=0, empty=0;
+  Object.values(shelf).forEach(s=>s.items.forEach(i=>i.url?filled++:empty++));
+  Object.values(wbs).forEach(w=>WSLOTS.forEach(([k])=>{ (w.slots[k]&&w.slots[k].url)?filled++:empty++ }));
+
+  let h=`<section><h1 class="pg">Resources</h1>
+   <p class="lede">Everything FDE in one place — product, sales, research, and every webinar's deck, recording,
+   transcript and poll. <b>${filled} added, ${empty} still empty.</b> Empty slots are shown deliberately, so a
+   missing thing is visible rather than forgotten.</p>`;
+
+  // per-webinar assets first, since that is what people hunt for
+  h+=`<h3 class="sec" style="margin-top:0">Webinar by webinar</h3>
+   <p class="lede">Every webinar gets the same eight slots. If something does not exist yet it says so.</p>`;
+  Object.entries(wbs).sort((a,b)=>a[0]<b[0]?1:-1).forEach(([day,w])=>{
+    const done = WSLOTS.filter(([k])=>w.slots[k]&&w.slots[k].url).length;
+    h+=`<div class="card" style="margin-bottom:14px">
+      <h3>${esc(w.label)} <span class="pill ${done===WSLOTS.length?"good":done?"":"hot"}">${done} of ${WSLOTS.length} added</span></h3>
+      <div class="sub">${done<WSLOTS.length?"The missing ones are listed below with an Add button.":"Everything is here."}</div>
+      ${WSLOTS.map(([k,lab])=>{
+        const s=w.slots[k]||{url:"",note:""};
+        return slotRow("wb:"+day,k,lab,s.url,s.note)}).join("")}
+    </div>`;
+  });
+  h+=`<button onclick="resAddWebinar()">Add another webinar</button>`;
+
+  // the shelf
+  Object.entries(shelf).forEach(([key,sec])=>{
+    const done=sec.items.filter(i=>i.url).length;
+    h+=`<h3 class="sec">${esc(sec.name)}</h3>
+      <p class="lede">${esc(sec.note)} <b>${done} of ${sec.items.length} added.</b></p>
+      <div class="card">
+        ${sec.items.map(i=>slotRow(key,i.id,i.label,i.url,i.note)).join("")}
+        <button style="margin-top:10px" onclick="resAddItem('${key}')">Add something else</button>
+      </div>`;
+  });
+
+  // PA feedback
+  h+=`<h3 class="sec">Advisor feedback</h3>
+   <p class="lede">What the sales team says back — about the deck, the pitch, the leads, the objections they keep
+   hitting. Written down here it becomes evidence; said in a huddle it evaporates.</p>
+   <div class="card">
+     <div class="ctl">
+       <label class="f">Advisor</label>
+       <input type="text" id="fbPa" placeholder="Who said it" style="min-width:180px">
+       <label class="f">About</label>
+       <select id="fbTopic">
+         <option>The pitch</option><option>Lead quality</option><option>Objections</option>
+         <option>Pricing</option><option>The deck</option><option>The programme itself</option>
+         <option>Process and tooling</option><option>Something else</option>
+       </select>
+     </div>
+     <div class="ctl">
+       <textarea id="fbText" rows="3" placeholder="What did they actually say? Their words, not a summary."
+         style="width:100%;min-width:400px"></textarea>
+     </div>
+     <div class="ctl">
+       <button class="pri" onclick="fbAdd()">Add it</button>
+       ${FEEDBACK.length?`<button onclick="fbExport()">Download as CSV</button>
+       <span class="mute">${FEEDBACK.length} note${FEEDBACK.length===1?"":"s"} so far</span>`:""}
+     </div>
+   </div>`;
+
+  if(FEEDBACK.length){
+    const byTopic={}; FEEDBACK.forEach(f=>byTopic[f.topic]=(byTopic[f.topic]||0)+1);
+    const mx=Math.max(...Object.values(byTopic));
+    h+=`<div class="grid" style="grid-template-columns:1fr 2fr;margin-top:14px">
+      <div class="card"><h3>What they talk about</h3>
+        <div class="sub">Where the same thing keeps coming up is where the problem is.</div>
+        ${Object.entries(byTopic).sort((a,b)=>b[1]-a[1]).map(([k,v])=>
+          `<div class="hbar"><div class="nm">${esc(k)}</div>
+           <div class="tr"><i style="width:${v/mx*100}%;background:var(--cy)"></i></div>
+           <div class="vn">${v}</div></div>`).join("")}
+      </div>
+      <div class="card"><h3>The notes</h3>
+        <div class="sub">Newest first.</div>
+        <div style="max-height:420px;overflow:auto">
+        ${FEEDBACK.map((f,i)=>`<div class="fbnote">
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline">
+            <div><b>${esc(f.pa)}</b> <span class="pill">${esc(f.topic)}</span></div>
+            <div style="display:flex;gap:8px;align-items:baseline">
+              <span class="mute" style="font-size:11px">${new Date(f.at).toLocaleDateString()}</span>
+              <button class="gh" style="padding:1px 7px;font-size:11px" onclick="fbRemove(${i})">delete</button></div>
+          </div>
+          <div style="font-size:13.5px;line-height:1.6;margin-top:5px">${esc(f.text)}</div>
+          ${f.webinar?`<div class="mute" style="font-size:11px;margin-top:4px">${esc(f.webinar)}</div>`:""}
+        </div>`).join("")}
+        </div></div></div>`;
+  }
+
+  h+=`<div class="card" style="margin-top:16px"><h3>What is still missing</h3>
+   <div class="sub" style="margin:0;line-height:1.9">`;
+  const gaps=[];
+  Object.entries(wbs).forEach(([d,w])=>WSLOTS.forEach(([k,lab])=>{
+    if(!(w.slots[k]&&w.slots[k].url)) gaps.push(`${lab} — ${w.label}`)}));
+  Object.values(shelf).forEach(s=>s.items.forEach(i=>{ if(!i.url) gaps.push(`${i.label} — ${s.name}`) }));
+  h+= gaps.length
+    ? gaps.slice(0,30).map(g=>`${esc(g)}<br>`).join("") + (gaps.length>30?`<b>and ${gaps.length-30} more</b>`:"")
+    : "Nothing. Everything on the shelf has a link.";
+  h+=`</div></div></section>`;
+  return h;
+}
+
 /* ============ NAV ============ */
 const TABS=[
- ["THE PICTURE",[["lead","Summary"],["webinars","Webinars"],["webinar","Webinar view"],["campaigns","Where leads come from"],["t500","Talent 500"],["calling","Calling effort"],["funnel","Funnel"],["explore","Explore"],["plan","Do this next"],["scen","Lead states"]]],
+ ["THE PICTURE",[["lead","Summary"],["resources","Resources"],["webinars","Webinars"],["webinar","Webinar view"],["campaigns","Where leads come from"],["t500","Talent 500"],["calling","Calling effort"],["funnel","Funnel"],["explore","Explore"],["plan","Do this next"],["scen","Lead states"]]],
  ["THE TEAM",[["coach","PA coach"],["org","FDE org chart"],["pa","Advisors"],["discipline","Wrong info given"],["voice","What leads said"]]],
  ["THE LEADS",[["queue","Call list"],["noshow","No shows"],["noniql","Non-IQL leads"],["upsell","Existing students"],["segments","Groups"],["leads","Every lead"]]],
  ["KEEP IT FRESH",[["analyse","Call analysis"],["rec","Recordings"],["cover","Coverage & uploads"],["audit","What changed"],["trend","Track progress"],["upload","Upload data"]]],
@@ -4170,6 +4504,7 @@ const TABCOUNT=()=>({
  noniql:NONIQL.length, coach:CARDS.length,
  explore:UNIV.length, webinar:UNIV.length, webinars:WBIDX.length,
  campaigns:UNIV.length, t500:t500Rows().length, calling:UNIV.length,
+ resources:(RES?Object.values(RES.shelf).reduce((a,s)=>a+s.items.filter(i=>!i.url).length,0)||undefined:undefined),
  analyse:0, audit:(AUDIT&&AUDIT.moved?AUDIT.moved.length:0)||undefined, org:ORG.meta.total, cover:COVERAGE.todo,
 
  upsell:UNIV.filter(r=>num(r.existing_student)===1&&num(r.enrolled_in_fde)===0).length});
@@ -5605,7 +5940,7 @@ async function loadSeed(){
 
 function render(){
   applyFilters();applyNSFilters();renderNav();
-  const P={lead:pageLead,webinars:pageWebinars,audit:pageAudit,webinar:pageWebinar,
+  const P={lead:pageLead,resources:pageResources,webinars:pageWebinars,audit:pageAudit,webinar:pageWebinar,
    campaigns:pageCampaigns,t500:pageTalent500,calling:pageCalling,funnel:pageFunnel,explore:pageExplore,plan:pagePlan,scen:pageScen,coach:pageCoach,org:pageOrg,pa:pagePA,discipline:pageDisc,
    voice:pageVoice,queue:pageQueue,noshow:pageNoShow,noniql:pageNonIQL,upsell:pageUpsell,segments:pageSeg,
    leads:pageLeads,analyse:pageCallAnalysis,rec:pageRecordings,
@@ -5626,6 +5961,7 @@ function render(){
 
 (async function init(){
   $("stamp").textContent=new Date().toLocaleDateString([], {day:"2-digit",month:"short",year:"numeric"});
+  await resLoad();
   await loadSeed();
   const restored=await restoreSaved();
   if(restored)logMsg("Restored the last saved version.","b");

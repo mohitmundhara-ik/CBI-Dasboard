@@ -6,7 +6,7 @@
 // The proxy keeps them in Vercel's environment instead.
 //
 // Environment variables (Vercel → Settings → Environment Variables):
-//   SALESTRAIL_USER   bbcfcc1d-8476-4464-a2a5-80ee203e5973
+//   SALESTRAIL_USER   your Salestrail API username
 //   SALESTRAIL_PASS   the password / API key that goes with it
 //   API_KEY           the same one the sheet proxy uses
 //

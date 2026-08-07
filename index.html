@@ -2210,11 +2210,11 @@ function fileStamp(files, analysisRows, dbRows, source){
     when: new Date().toLocaleString([], {day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}),
     files: files, source: source,
     analysis: analysisRows, db: dbRows,
-    read: VROWS.length,
+    read: ROWS.length,
     registered: UNIV.length,
     live: UNIV.filter(r=>num(r.attended_live)===1).length,
     noshow: UNIV.filter(r=>r.cohort==="NO_SHOW").length,
-    cqs: avg(VROWS.filter(r=>r.call_type==="SUBSTANTIVE_CONVERSATION").map(r=>r.cqs).filter(v=>v!=null)),
+    cqs: avg(ROWS.filter(r=>r.call_type==="SUBSTANTIVE_CONVERSATION").map(r=>r.cqs).filter(v=>v!=null)),
     batches: [...new Set((ALLUNIV.length?ALLUNIV:UNIV).map(r=>S(r.webinar_batch)))].join(", "),
     moved: [], newLeads: 0, gone: 0,
   };
@@ -2252,8 +2252,7 @@ function pageCoverage(){
 
   let h=`<section><div class="eyebrow">Section 14 · What is done, what is left</div>
    <h1 class="pg">Coverage &amp; uploads</h1>
-   <p class="lede">How much of the base has actually been through the call-reading prompt, what is still waiting,
-   and a record of every file loaded so you always know which version the numbers came from.</p>
+   <p class="lede">What has been read, what is waiting, and every file loaded.</p>
    <div class="callout ${pct0>=80?"ok":""}">
      <h4>${C.done} of ${C.total} done. ${C.todo} still to read.</h4>
      <p>Everything on the call-quality pages is the <b>${C.done}</b>. The other <b>${C.todo}</b> are invisible to every
@@ -2388,7 +2387,7 @@ function pageCoverage(){
   return h+"</section>";
 }
 function cvRows(label){
-  const ids=new Set(VROWS.map(r=>String(r.hubspot_id)));
+  const ids=new Set(ROWS.map(r=>String(r.hubspot_id)));
   const an=r=>ids.has(String(r.hubspot_id));
   const live=r=>num(r.attended_live)===1, off=r=>num(r.attended_offdate)===1;
   if(label.startsWith("Attended live, calls read"))      return UNIV.filter(r=>an(r)&&live(r));
@@ -2816,9 +2815,7 @@ function pageWebinar(){
   const attRate = pct(att.length, reg.length);
   let h=`<section><div class="eyebrow">Section 2 · One webinar, every number</div>
    <h1 class="pg">Webinar view</h1>
-   <p class="lede">Everything about a single webinar in one place. The top row is the headline. Below it, the same
-   tables twice — <b>everyone who registered</b> on the left, <b>only those who came</b> on the right — so you can
-   read straight across and see exactly what attendance changes.</p>
+   <p class="lede">Same tables twice: <b>registered</b> left, <b>came</b> right.</p>
    <div class="ctl">
      <label class="f">Webinar</label>
      <select onchange="WVBATCH=this.value;render()">
@@ -3566,12 +3563,10 @@ function wbList(){ return (typeof WBIDX !== "undefined" && WBIDX.length) ? WBIDX
    of them arrive. */
 function wbSelected(){
   const l = wbList();
-  // WBSEL can be knocked out by an older saved state or a bad restore, and a
-  // null here takes the whole page down. Recover rather than throw.
   if(!(WBSEL instanceof Set)) WBSEL = new Set();
   if(!WBSEL.size) return l;
   const sel = l.filter(w => WBSEL.has(w.date));
-  return sel.length ? sel : l;   // a stale date must not empty the dashboard
+  return sel.length ? sel : l;
 }
 function wbCurrent(){
   const sel = wbSelected();
@@ -3630,6 +3625,7 @@ function wbPicker(){
   </span>`;
 }
 
+
 function pageWebinars(){
   const l = wbList();
   if(!l.length) return noDB("Webinars");
@@ -3641,8 +3637,7 @@ function pageWebinars(){
 
   let h=`<section><div class="eyebrow">Every webinar</div>
    <h1 class="pg">Webinars</h1>
-   <p class="lede">Every FDE webinar in the file, each with its own numbers. Click one to point the whole
-   dashboard at it. ${leadLink({},"or open the master lead list")}</p>`;
+   <p class="lede">Click one to point the dashboard at it. ${leadLink({},"or open all leads")}</p>`;
 
   h+=`<div class="tw"><table><thead><tr>
     <th>Webinar</th><th class="n">Registered</th><th class="n">Came live</th><th class="n">Turned up later</th>
@@ -3715,8 +3710,7 @@ function pageAudit(){
   const d = (typeof AUDIT !== "undefined") ? AUDIT : null;
   let h=`<section><div class="eyebrow">Audit</div>
    <h1 class="pg">What changed</h1>
-   <p class="lede">Every load is compared against the one before it, lead by lead. Nothing is summarised away,
-   so anything that moves can be traced back later.</p>`;
+   <p class="lede">Every load compared against the one before it, lead by lead.</p>`;
 
   h+=`<div class="callout info"><h4>Why this page exists</h4>
     <p>When someone re-registers, the CRM overwrites their row rather than keeping both. Their webinar date changes
@@ -4062,8 +4056,7 @@ function pageCampaigns(){
   window._FNSRC = window._FNSRC || {}; window._FNSRC.cmp = UNIV;
 
   let h = `<section><h1 class="pg">Where the leads come from</h1>
-   <p class="lede">${UNIV.length} leads for <b>${esc((wbCurrent()||{}).label||"this webinar")}</b>, cut whichever way is useful.
-   Show rate is the number that separates a good source from a cheap one.</p>
+   <p class="lede">${UNIV.length} leads. Show rate separates a good source from a cheap one.</p>
    <p class="lede" style="margin-top:-6px">${leadLink({},"open the master lead list")}</p>
    <div class="ctl">
      <label class="f">Cut by</label>
@@ -4146,9 +4139,7 @@ function pageTalent500(){
   const A = stat(t), B = stat(rest);
 
   let h = `<section><h1 class="pg">Talent 500</h1>
-   <p class="lede">Our affiliate partner, and the single biggest source in the file —
-   <b>${t.length} of ${all.length} leads</b>, ${pct(t.length, all.length)} of everything.
-   End to end, lead generated through to enrolled.</p>
+   <p class="lede">Our affiliate partner. <b>${t.length} of ${all.length} leads</b>, ${pct(t.length, all.length)} of everything.</p>
 
    <p class="lede" style="margin-top:-6px">${leadLink({channel:"Talent 500"},"open all Talent 500 leads")}</p>
    <div class="kpis">
@@ -4161,8 +4152,7 @@ function pageTalent500(){
    </div>
 
    <h3 class="sec">Talent 500 against everything else</h3>
-   <p class="lede">Same measures both sides. Where the two columns differ is where the partnership is
-   actually earning or costing.</p>
+   <p class="lede">Where the columns differ is where it earns or costs.</p>
    <div class="tw"><table><thead><tr>
      <th>Measure</th><th class="n">Talent 500</th><th class="n">Rate</th>
      <th class="n">Everyone else</th><th class="n">Rate</th><th>What it says</th>
@@ -4188,7 +4178,7 @@ function pageTalent500(){
   t.forEach(r => { const k = S(r.webinar_batch) || "Unknown"; (byW[k] = byW[k] || []).push(r) });
   if(Object.keys(byW).length > 1){
     h += `<h3 class="sec">Webinar by webinar</h3>
-     <p class="lede">Whether the quality is holding as volume grows.</p>
+     <p class="lede">Whether quality holds as volume grows.</p>
      <div class="tw"><table><thead><tr><th>Webinar</th><th class="n">Leads</th><th class="n">Came</th>
      <th class="n">Show rate</th><th class="n">Discovery</th><th class="n">Ready</th><th class="n">Enrolled</th>
      </tr></thead><tbody>`;
@@ -4203,8 +4193,7 @@ function pageTalent500(){
 
   // who they send
   h += `<h3 class="sec">Who they send</h3>
-   <p class="lede">The profile of a Talent 500 lead, next to everyone else. This is what to take into the
-   next partner conversation.</p>
+   <p class="lede">The profile of a Talent 500 lead.</p>
    <div class="grid" style="grid-template-columns:1fr 1fr">`;
   [["work_ex", "Years of experience"], ["role_domain", "Role"],
    ["city", "City"], ["interview_start_time", "When they want to interview"]].forEach(([k, lab]) => {
@@ -4252,8 +4241,7 @@ function pageCalling(){
   window._CALL = { withPre, withPost, noPost, attNoPost };
 
   let h = `<section><h1 class="pg">Calling effort</h1>
-   <p class="lede">What the dialling is actually producing, split either side of the webinar.
-   Before the webinar the job is to get them to turn up. After it, the job is to sell.</p>
+   <p class="lede">Before the webinar the job is attendance. After it, the sale.</p>
 
    <div class="grid" style="grid-template-columns:1fr 1fr">
    <div class="card"><h3>Before the webinar</h3>
@@ -4300,8 +4288,7 @@ function pageCalling(){
   window._CPA = paRows.map(r => r.g);
 
   h += `<h3 class="sec">By advisor</h3>
-   <p class="lede">Dials either side of the webinar, per person. A big pre-webinar number with a small
-   post-webinar one means the follow-through is missing, not the effort.</p>
+   <p class="lede">Big before, small after means the follow-through is missing.</p>
    <div class="tw"><table><thead><tr>
      <th>Advisor</th><th class="n">Leads</th><th class="n">Dials before</th><th class="n">Connects before</th>
      <th class="n">Came</th><th class="n">Dials after</th><th class="n">Connects after</th>
@@ -4338,8 +4325,7 @@ function buyersBlock(rows, title){
   window._BUY = B;
   const rev = arr => arr.reduce((a,r)=>a+(num(r.net_revenue)||0),0);
   let h = `<h3 class="sec">${title||"Who bought"}</h3>
-   <p class="lede">Only sales dated on or after 27 July count as coming from this campaign. Anyone marked
-   enrolled with no sale date is an existing student who came back, and is counted separately.</p>
+   <p class="lede">Sales dated 27 July onward. Undated ones are old students.</p>
    <div class="kpis">
      ${kpi_raw("B1","Bought FDE",B.fde.length,"since the campaign started",B.fde.length?"g":"r")}
      ${kpi_raw("B2","Bought another IK course",B.other.length,"cross-sell, not an FDE sale","a")}
@@ -4841,9 +4827,7 @@ function pageJobs(){
   </select>`;
 
   let h=`<section><h1 class="pg">FDE jobs</h1>
-   <p class="lede">Every Forward Deployed Engineer posting scraped from LinkedIn — <b>${JOBS.length} in total,
-   ${JOBS.filter(j=>j.in).length} in India</b>. This is the evidence behind the org chart and the answer to
-   "is this role real". Filter it and send someone the list.</p>
+   <p class="lede"><b>${JOBS.length} postings, ${JOBS.filter(j=>j.in).length} in India.</b> Filter and download.</p>
    <div class="ctl">
      <input type="search" placeholder="Search title, company or text" value="${esc(JF.q)}"
        oninput="JF.q=this.value;render()" style="min-width:260px">
@@ -4981,9 +4965,7 @@ function pageMaster(){
     ${opts.map(([v,n])=>`<option value="${esc(v)}" ${LF[k]===v?"selected":""}>${esc(v)} (${n})</option>`).join("")}</select>`;
 
   let h=`<section><h1 class="pg">All leads</h1>
-   <p class="lede">Every lead across every webinar — <b>${total} rows</b>. This is the master record; anywhere else
-   in the tool that talks about leads links back here with the filter already applied. Click any row for that
-   lead's full history.</p>
+   <p class="lede"><b>${total} leads</b> across every webinar. Click a row for the full history.</p>
    <div class="ctl">
      <input type="search" placeholder="Search ID, advisor, role, city or status" value="${esc(LF.q)}"
        oninput="LF.q=this.value;render()" style="min-width:280px">
@@ -5424,9 +5406,9 @@ function pageInsights(){
   const dcd   = R.filter(r => num(r.DCD_Flag) > 0);
   const rte   = R.filter(r => num(r.RTE_Flag) > 0);
   const B     = buyers(R);
-  const ids   = new Set(VROWS.map(r => String(r.hubspot_id)));
+  const ids   = new Set(ROWS.map(r => String(r.hubspot_id)));
   const read  = R.filter(r => ids.has(String(r.hubspot_id)));
-  const sub   = VROWS.filter(r => r.call_type === "SUBSTANTIVE_CONVERSATION");
+  const sub   = ROWS.filter(r => r.call_type === "SUBSTANTIVE_CONVERSATION");
   const showRate = n ? att.length / n : 0;
   const cqs = avg(sub.map(r => r.cqs).filter(v => v != null));
   const w = wbCurrent();
@@ -5436,8 +5418,7 @@ function pageInsights(){
     .map(([k,v]) => ({k, v, sub: extra ? extra(k, v) : ""}));
 
   let h = `<section><h1 class="pg">Insights</h1>
-   <p class="lede">The whole picture for <b>${esc((w||{}).label || "this webinar")}</b> — ${n} leads.
-   Read top to bottom: what happened, where it leaks, what drives it, who is doing it, what to do.</p>`;
+   <p class="lede"><b>${esc((w||{}).label || "this webinar")}</b> · ${n} leads.</p>`;
 
   /* ---- 1. headline ---- */
   h += `<h3 class="sec" style="margin-top:0">The headline</h3>
@@ -5466,8 +5447,7 @@ function pageInsights(){
     if(d > worst.drop) worst = {drop:d, from:steps[i-1].k, to:steps[i].k};
   }
   h += `<h3 class="sec">Where it leaks</h3>
-   <p class="lede">A waterfall rather than a funnel, because the question is how many are lost between steps,
-   not how many survive each one. The red block is the loss.</p>
+   <p class="lede">Red is what is lost between steps.</p>
    ${waterfall(steps, {note:`Biggest single loss: ${worst.drop} leads between ${worst.from} and ${worst.to}.`})}
    <div class="callout"><h4>The biggest leak is ${worst.from} → ${worst.to}</h4>
      <p><b>${worst.drop} leads</b> disappear at that step, ${pct(worst.drop, n)} of everyone.
@@ -5484,8 +5464,7 @@ function pageInsights(){
     return {k, v: a, target: Math.round(v * showRate), suffix:"", leads:v, rate: v ? a/v : 0};
   }).filter(x => x.leads >= 5).sort((a,b) => b.leads - a.leads);
   h += `<h3 class="sec">What drives it</h3>
-   <p class="lede">Attendance by channel against what that channel would deliver at the overall show rate.
-   The marker is the expectation; the bar is reality. Green beats it, amber misses.</p>
+   <p class="lede">Marker is the expectation, bar is reality.</p>
    ${bullet(chByShow, {title:"Attendance against expectation, by channel",
      note:`Overall show rate is ${(showRate*100).toFixed(0)}%. Channels with fewer than five leads are left out.`})}`;
 
@@ -5502,8 +5481,7 @@ function pageInsights(){
   const exps  = ["0-2","2-5","5-8","9-15","16-20","20+"].filter(e => R.some(r => S(r.work_ex) === e));
   const topRoles = roles.slice(0, 8).map(r => r.k);
   h += `<h3 class="sec">Who they are</h3>
-   <p class="lede">Role against experience, in one grid. Two dimensions at once is the only way to see where
-   the audience actually sits.</p>
+   <p class="lede">Role against experience.</p>
    ${heatmap(topRoles, exps, (ro, ex) => R.filter(r => S(r.role_domain)===ro && S(r.work_ex)===ex).length,
      {title:"Leads by role and experience", note:"Darker is more. Top eight roles."})}
    ${treemap(roles, {title:"The whole role mix", note:"Area is share of leads. Ordered largest first."})}`;
@@ -5511,15 +5489,14 @@ function pageInsights(){
   /* ---- 5. who is working it ---- */
   const paRows = Object.entries(by(R,"pa_name_final")).filter(([,v]) => v >= 4).map(([k, v]) => {
     const g = R.filter(r => S(r.pa_name_final) === k);
-    const gc = VROWS.filter(r => S(r.pa_name_final) === k && r.call_type === "SUBSTANTIVE_CONVERSATION");
+    const gc = ROWS.filter(r => S(r.pa_name_final) === k && r.call_type === "SUBSTANTIVE_CONVERSATION");
     const sc = avg(gc.map(r => r.cqs).filter(x => x != null));
     return {x: v, y: sc ?? 0, r: Math.sqrt(sumOf(g,"total_tt"))/2.2, label: k.split(" ")[0],
             color: (sc||0) < 40 ? "#C0392B" : (sc||0) > 55 ? "#1E8449" : PAL[0], leads: v, cqs: sc};
   }).filter(p => p.y > 0);
   if(paRows.length){
     h += `<h3 class="sec">Who is working it</h3>
-     <p class="lede">Book size against call quality. Bubble size is minutes on the phone. Bottom-right is the
-     dangerous quadrant — a big book being worked badly.</p>
+     <p class="lede">Bubble size is minutes. Bottom-right is a big book worked badly.</p>
      ${scatter(paRows, {xLabel:"Leads assigned", yLabel:"Average call score", yBand: cqs,
        bandLabel:"average across everyone",
        title:"Advisors: volume against quality",
@@ -5536,7 +5513,7 @@ function pageInsights(){
   const preA = sumOf(R,"pre_webinar_attempt"), posA = sumOf(R,"post_webinar_attempt");
   const preC = sumOf(R,"pre_webinar_connect"), posC = sumOf(R,"post_webinar_connect");
   h += `<h3 class="sec">Effort, before and after</h3>
-   <p class="lede">Where the dialling goes. Before the webinar the job is attendance; after it, the job is the sale.</p>
+   <p class="lede">Where the dialling goes.</p>
    ${stackedBar([
      {k:"Dials", v:{"Before the webinar":preA, "After the webinar":posA}},
      {k:"Connects", v:{"Before the webinar":preC, "After the webinar":posC}},
@@ -5562,16 +5539,14 @@ function pageInsights(){
                   note:`${x.rte} ready to enrol`});
     });
     h += `<h3 class="sec">The campaign timeline</h3>
-     <p class="lede">Each webinar as three phases. The filled part of the selling bar is how much of the
-     three-week window has already gone.</p>
+     <p class="lede">The filled bar is how much of the selling window has gone.</p>
      ${gantt(tasks, {title:"Lead generation, the webinar, and the window to sell",
        note:"Selling windows are drawn as three weeks — most enrolments land inside that."})}`;
   }
 
   /* ---- 8. coverage ---- */
   h += `<h3 class="sec">What we can actually see</h3>
-   <p class="lede">Every call-quality number on this page describes only the calls that have been read.
-   This is the honest denominator.</p>
+   <p class="lede">Covers only the calls we have read.</p>
    ${barRank([
      {k:"Calls read and scored", v:read.length, color:"#1E8449"},
      {k:"Attended, calls not read", v:att.length - read.filter(r=>num(r.attended_live)===1).length, color:"#B9770E"},
@@ -5579,9 +5554,9 @@ function pageInsights(){
    ], {title:"Coverage of the call analysis", note:`${read.length} of ${n} leads have been through the prompt.`, labelW:230})}`;
 
   /* ---- 9. what to do ---- */
-  const noNext = VROWS.filter(r => r.next_step_status === "NOT_DEFINED").length;
-  const noUrg  = VROWS.filter(r => r.urgency_flag === "NONE").length;
-  const hotNoDate = VROWS.filter(r => r.temperature === "HOT" && r.next_step_status !== "DEFINED").length;
+  const noNext = ROWS.filter(r => r.next_step_status === "NOT_DEFINED").length;
+  const noUrg  = ROWS.filter(r => r.urgency_flag === "NONE").length;
+  const hotNoDate = ROWS.filter(r => r.temperature === "HOT" && r.next_step_status !== "DEFINED").length;
   h += `<h3 class="sec">What the numbers argue for</h3>
    <div class="card"><div class="sub" style="margin:0;line-height:2">
      <b style="color:var(--ink)">Attendance is not the problem.</b> ${(showRate*100).toFixed(0)}% turned up, which is
@@ -5713,17 +5688,207 @@ function toggleDense(){
   render();
 }
 
+/* ============ CONVERSION ============
+   Who buys, cut every way the data allows. Only sales dated on or after the
+   campaign start count. */
+
+let CVDIM = "channel";
+const CV_DIMS = [
+  ["channel",              "Channel"],
+  ["UTM_Campaign",         "Campaign"],
+  ["work_ex",              "Experience"],
+  ["Category",             "Role group"],
+  ["role_domain",          "Role"],
+  ["city",                 "City"],
+  ["interview_start_time", "Interview timing"],
+  ["pa_name_final",        "Advisor"],
+  ["pod_final",            "Team"],
+  ["webinar_batch",        "Webinar"],
+  ["cohort",               "Attended or not"],
+  ["latest_classification","CRM rating"],
+];
+
+function cvSet(k){ CVDIM = k; render() }
+function cvBought(r){ return S(r.sale_date).slice(0,10) >= CAMPAIGN_START }
+function cvFde(r){ return cvBought(r) && /FDE/i.test(S(r.course)) }
+function cvRev(rows){ return rows.reduce(function(a,r){ return a + (num(r.net_revenue)||0) }, 0) }
+
+function cvExport(){
+  const rows = UNIV.filter(cvBought);
+  if(!rows.length) return;
+  const cols = ["hubspot_id","sale_date","course","net_revenue","pa_name_final","pod_final",
+    "role_domain","Category","work_ex","city","channel","UTM_Campaign","interview_start_time",
+    "webinar_batch","attended_on","total_attempt","total_tt","sales_timing"];
+  const q = v => '"' + S(v).replace(/"/g,'""') + '"';
+  const csv = [cols.join(",")].concat(rows.map(r => cols.map(c => q(r[c])).join(","))).join("\n");
+  const b = new Blob(["\ufeff"+csv], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(b);
+  a.download = "CBI_conversion_" + new Date().toISOString().slice(0,10) + ".csv"; a.click();
+}
+
+function pageConversion(){
+  if(!UNIV.length) return noDB("Conversion");
+  const R = UNIV;
+  const won  = R.filter(cvBought);
+  const fde  = R.filter(cvFde);
+  const other = won.filter(r => !cvFde(r));
+  const undated = R.filter(r => (S(r.lead_status)==="Enrolled"||num(r.existing_student)===1) && !S(r.sale_date).trim());
+  const rev = cvRev(won);
+  const att = R.filter(r => num(r.attended_live)===1);
+  const dcd = R.filter(r => num(r.DCD_Flag)>0);
+  const rte = R.filter(r => num(r.RTE_Flag)>0);
+  window._CV = {won:won, fde:fde, other:other, undated:undated, att:att, dcd:dcd, rte:rte};
+
+  const rate = (a,b) => b ? a/b : 0;
+  const dim = CVDIM;
+  const dimLab = (CV_DIMS.find(d => d[0]===dim)||[])[1] || dim;
+  const paid = won.filter(r => num(r.net_revenue)).length;
+
+  let h = '<section><h1 class="pg">Conversion</h1>' +
+   '<p class="lede">Who buys, and what they have in common. Sales dated 27 July onward.</p>' +
+   '<div class="kpis">' +
+     kpi_raw("C1","Bought",won.length,pct(won.length,R.length)+" of "+R.length+" leads",won.length?"g":"r") +
+     kpi_raw("C2","Bought FDE",fde.length,pct(fde.length,R.length)+" of leads",fde.length?"g":"r") +
+     kpi_raw("C3","Bought something else",other.length,"cross-sell","a") +
+     kpi_raw("C4","Revenue",Math.round(rev).toLocaleString(),"as exported","a") +
+     kpi_raw("C5","Average deal",paid?Math.round(rev/paid).toLocaleString():"—","per recorded sale","a") +
+     kpi_raw("C6","Enrolled, no date",undated.length,"left out","w") +
+   '</div>';
+
+  h += '<h3 class="sec">Lead to sale</h3>' +
+   barRank([
+     {k:"Leads", v:R.length, color:PAL[1]},
+     {k:"Attended", v:att.length, sub:pct(att.length,R.length), color:PAL[0]},
+     {k:"Discovery call", v:dcd.length, sub:pct(dcd.length,R.length), color:PAL[0]},
+     {k:"Ready to enrol", v:rte.length, sub:pct(rte.length,R.length), color:"#B9770E"},
+     {k:"Bought", v:won.length, sub:pct(won.length,R.length), color:"#1E8449"},
+   ], {labelW:150});
+
+  const RATES = [
+    ["Lead","Attended",att.length,R.length],
+    ["Lead","Discovery call",dcd.length,R.length],
+    ["Attended","Discovery call",dcd.filter(r=>num(r.attended_live)===1).length,att.length],
+    ["Discovery call","Ready to enrol",rte.length,dcd.length],
+    ["Ready to enrol","Bought",won.filter(r=>num(r.RTE_Flag)>0).length,rte.length],
+    ["Lead","Bought",won.length,R.length],
+    ["Attended","Bought",won.filter(r=>num(r.attended_live)===1).length,att.length],
+    ["Did not attend","Bought",won.filter(r=>num(r.attended_live)!==1).length,R.length-att.length],
+  ];
+  h += '<h3 class="sec">Conversion rates</h3><div class="tw"><table><thead><tr>' +
+    '<th>From</th><th>To</th><th class="n">Rate</th><th></th></tr></thead><tbody>' +
+    RATES.map(x => '<tr><td>'+x[0]+'</td><td><b>'+x[1]+'</b></td><td class="n"><b>'+
+      pct(x[2],x[3])+'</b></td><td class="mute">'+x[2]+' of '+x[3]+'</td></tr>').join("") +
+    '</tbody></table></div>';
+
+  const groups = {};
+  R.forEach(r => { const k = S(r[dim]) || "(not set)"; (groups[k] = groups[k]||[]).push(r) });
+  const rows = Object.keys(groups).map(function(k){
+    const g = groups[k];
+    return {k:k, g:g, leads:g.length,
+      att:g.filter(r=>num(r.attended_live)===1).length,
+      dcd:g.filter(r=>num(r.DCD_Flag)>0).length,
+      won:g.filter(cvBought).length,
+      fde:g.filter(cvFde).length,
+      rev:cvRev(g.filter(cvBought))};
+  }).sort((a,b) => (b.won-a.won) || (b.leads-a.leads));
+  window._CVG = rows.map(r => r.g);
+  const overall = rate(won.length, R.length);
+
+  h += '<h3 class="sec">Cut it by anything</h3><div class="ctl"><label class="f">By</label>' +
+    '<select onchange="cvSet(this.value)">' +
+    CV_DIMS.map(d => '<option value="'+d[0]+'"'+(dim===d[0]?" selected":"")+'>'+d[1]+'</option>').join("") +
+    '</select><button onclick="cvExport()">Download the buyers</button>' +
+    '<span class="mute">Overall '+(overall*100).toFixed(1)+'%</span></div>';
+
+  h += '<div class="tw"><table><thead><tr><th>'+esc(dimLab)+'</th><th class="n">Leads</th>' +
+    '<th class="n">Came</th><th class="n">Discovery</th><th class="n">Bought</th><th class="n">Rate</th>' +
+    '<th class="n">vs overall</th><th class="n">FDE</th><th class="n">Revenue</th></tr></thead><tbody>';
+  rows.forEach(function(r,i){
+    const cr = rate(r.won, r.leads), lift = overall ? cr/overall : 0;
+    const good = r.won && lift >= 1.3, bad = r.leads >= 20 && !r.won;
+    h += '<tr class="click" onclick="cvOpen('+i+')"><td><b>'+esc(r.k)+'</b></td>' +
+      '<td class="n">'+r.leads+'</td><td class="n">'+r.att+'</td><td class="n">'+r.dcd+'</td>' +
+      '<td class="n"><b>'+(r.won||"")+'</b></td>' +
+      '<td class="n">'+(r.won?(cr*100).toFixed(1)+"%":"")+'</td>' +
+      '<td class="n" style="color:'+(good?"var(--grn)":bad?"var(--red)":"inherit")+
+        ';font-weight:'+(good||bad?700:400)+'">' +
+        (r.won ? (lift>=1?"+":"")+((lift-1)*100).toFixed(0)+"%" : bad?"none":"") + '</td>' +
+      '<td class="n">'+(r.fde||"")+'</td>' +
+      '<td class="n">'+(r.rev?Math.round(r.rev).toLocaleString():"")+'</td></tr>';
+  });
+  h += '</tbody></table></div>';
+
+  const withWins = rows.filter(r => r.won > 0);
+  if(withWins.length){
+    h += '<div class="grid" style="grid-template-columns:1fr 1fr"><div>' +
+      donut(withWins.slice(0,4).map(r=>({k:r.k, v:r.won})),
+        {title:"Buyers by "+dimLab.toLowerCase(), unit:"buyers"}) +
+      '</div><div>' +
+      barRank(withWins.map(r=>({k:r.k, v:Math.round(rate(r.won,r.leads)*1000)/10, sub:r.won+" of "+r.leads})),
+        {title:"Conversion rate", note:"Percent of that group who bought.", labelW:170}) +
+      '</div></div>';
+  }
+
+  if(won.length){
+    h += '<h3 class="sec">Every buyer</h3><div class="tw"><table><thead><tr>' +
+      '<th>Lead ID</th><th>Sold</th><th>Course</th><th class="n">Revenue</th><th>Advisor</th>' +
+      '<th>Role</th><th>Experience</th><th>Channel</th><th>Came</th><th class="n">Minutes</th><th></th>' +
+      '</tr></thead><tbody>';
+    won.slice().sort((a,b) => S(b.sale_date).localeCompare(S(a.sale_date))).forEach(function(r){
+      h += '<tr class="click" onclick="leadFull(\''+esc(S(r.hubspot_id))+'\')">' +
+        '<td><span class="mono"><b>'+esc(S(r.hubspot_id))+'</b></span></td>' +
+        '<td>'+esc(S(r.sale_date).slice(0,10))+'</td>' +
+        '<td>'+esc(S(r.course)||"—")+' <span class="pill '+(cvFde(r)?"good":"warm")+'">'+
+          (cvFde(r)?"FDE":"other")+'</span></td>' +
+        '<td class="n">'+(num(r.net_revenue)?Math.round(num(r.net_revenue)).toLocaleString():"")+'</td>' +
+        '<td>'+esc(S(r.pa_name_final))+'</td><td>'+esc(S(r.role_domain))+'</td>' +
+        '<td>'+esc(S(r.work_ex))+'</td><td>'+esc(S(r.channel))+'</td>' +
+        '<td>'+(S(r.attended_on)?'<span class="pill good">yes</span>':'<span class="pill">no</span>')+'</td>' +
+        '<td class="n">'+(Math.round(num(r.total_tt)*10)/10)+'</td>' +
+        '<td><button class="gh">record</button></td></tr>';
+    });
+    h += '</tbody></table></div>';
+  }
+
+  if(won.length >= 3){
+    h += '<h3 class="sec">What buyers have in common</h3>' +
+      '<p class="lede">Buyer share against lead share. A big gap means that group converts above its weight.</p>' +
+      '<div class="tw"><table><thead><tr><th>Attribute</th><th class="n">Of buyers</th>' +
+      '<th class="n">Of leads</th><th class="n">Gap</th></tr></thead><tbody>';
+    ["work_ex","Category","channel","interview_start_time"].forEach(function(f){
+      const bc = {}, lc = {};
+      won.forEach(r => { const v = S(r[f])||"(not set)"; bc[v]=(bc[v]||0)+1 });
+      R.forEach(r => { const v = S(r[f])||"(not set)"; lc[v]=(lc[v]||0)+1 });
+      const flab = (CV_DIMS.find(d=>d[0]===f)||[])[1] || f;
+      Object.keys(bc).sort((a,b)=>bc[b]-bc[a]).forEach(function(v){
+        const bs = bc[v]/won.length, ls = (lc[v]||0)/R.length, gap = bs-ls;
+        h += '<tr><td>'+esc(v)+' <span class="mute">'+esc(flab)+'</span></td>' +
+          '<td class="n">'+(bs*100).toFixed(0)+'%</td><td class="n">'+(ls*100).toFixed(0)+'%</td>' +
+          '<td class="n" style="color:'+(gap>0.1?"var(--grn)":gap<-0.1?"var(--red)":"inherit")+
+          ';font-weight:'+(Math.abs(gap)>0.1?700:400)+'">'+(gap>0?"+":"")+(gap*100).toFixed(0)+'pt</td></tr>';
+      });
+    });
+    h += '</tbody></table></div>';
+  }
+
+  if(undated.length){
+    h += '<div class="callout" style="margin-top:16px"><h4>'+undated.length+
+      ' marked enrolled with no sale date</h4><p>No date means no way to tell a recent sale from an old one. ' +
+      '<button class="gh" onclick="drill(\'Conversion\',\'Enrolled, no sale date\',\'No date in the export.\',window._CV.undated,\'univ\')">see them</button></p></div>';
+  }
+  return h + '</section>';
+}
+function cvOpen(i){
+  const g = window._CVG[i];
+  drill("Conversion", S(g[0][CVDIM])||"(not set)", g.length+" leads in this group.", g, "univ");
+}
+
 /* ============ NAV ============ */
 const TABS=[
- ["OVERVIEW",[["lead","Summary"],["insights","Insights"],["webinars","Webinars"],["webinar","Webinar view"]]],
- ["MARKETING",[["campaigns","Where leads come from"],["t500","Talent 500"],["jobs","FDE jobs"],["org","FDE org chart"]]],
- ["SALES",[["calling","Calling effort"],["plan","Do this next"],["queue","Call list"],["pa","Advisors"],
-           ["coach","PA coach"],["discipline","Wrong info given"],["voice","What leads said"]]],
- ["LEADS",[["master","All leads"],["explore","Explore"],["scen","Lead states"],["funnel","Funnel"],
-           ["noshow","No shows"],["upsell","Existing students"],["segments","Groups"],
-           ["notfit","Not a fit"],["noniql","Non-IQL leads"],["leads","Every lead"]]],
- ["WORKSPACE",[["resources","Resources"],["analyse","Call analysis"],["rec","Recordings"]]],
- ["DATA",[["cover","Coverage & uploads"],["audit","What changed"],["trend","Track progress"],["upload","Upload data"]]],
+ ["THE PICTURE",[["lead","Summary"],["insights","Insights"],["resources","Resources"],["master","All leads"],["notfit","Not a fit"],["jobs","FDE jobs"],["webinars","Webinars"],["webinar","Webinar view"],["campaigns","Where leads come from"],["t500","Talent 500"],["calling","Calling effort"],["funnel","Funnel"],["explore","Explore"],["plan","Do this next"],["scen","Lead states"]]],
+ ["THE TEAM",[["coach","PA coach"],["org","FDE org chart"],["pa","Advisors"],["discipline","Wrong info given"],["voice","What leads said"]]],
+ ["THE LEADS",[["queue","Call list"],["noshow","No shows"],["noniql","Non-IQL leads"],["upsell","Existing students"],["segments","Groups"],["leads","Every lead"]]],
+ ["KEEP IT FRESH",[["analyse","Call analysis"],["rec","Recordings"],["cover","Coverage & uploads"],["audit","What changed"],["trend","Track progress"],["upload","Upload data"]]],
 ];
 const TABCOUNT=()=>({
  queue:VIEW.length, noshow:UNIV.filter(r=>r.cohort==="NO_SHOW").length,
@@ -5747,7 +5912,7 @@ function renderNav(){
         ${c[k]!==undefined?`<span class="ct">${c[k]}</span>`:""}</a>`});
   });
   $("nav").innerHTML=h;
-  $("foot").innerHTML=`${VROWS.length} analysed · ${UNIV.length} registered`;
+  $("foot").innerHTML=`${ROWS.length} analysed · ${UNIV.length} registered`;
 }
 function filterBar(keys){
   const opt=(k,arr,ph)=>`<label class="f">${ph}</label><select onchange="F.${k}=this.value;render()">
@@ -5761,7 +5926,7 @@ function filterBar(keys){
   if(keys.includes("q"))h+=`<input type="search" placeholder="Search any field or phrase…" value="${esc(F.q)}"
      oninput="F.q=this.value;clearTimeout(window._t);window._t=setTimeout(render,260)" style="min-width:260px">`;
   h+=`<button onclick="Object.keys(F).forEach(k=>F[k]='');render()">Reset</button>
-      <span class="mute mono" style="font-size:11px">${VIEW.length} of ${VROWS.length} analysed leads</span></div>`;
+      <span class="mute mono" style="font-size:11px">${VIEW.length} of ${ROWS.length} analysed leads</span></div>`;
   return h;
 }
 
@@ -5875,17 +6040,16 @@ function pageLead(){
       <h3>3 · The full picture, and what section 1 is <em>not</em> counting</h3>
       <div class="sub">${UNIV.length} people signed up. Section 1 only covers the ${n} whose calls we have read. Everything below is outside that — and mostly untouched.</div>
       <h3 class="sec" style="margin-top:0">The funnel</h3>
-      <p class="lede">Lead generated at the top, enrolled at the bottom. Every step is out of the leads who
-      signed up for this webinar. Click any row to see them.</p>
+      <p class="lede">Every step is out of the leads who signed up.</p>
       ${funnelHtml(UNIV,"sum")}
       <h3 class="sec">Who we can and cannot see</h3>
-      <p class="lede">Everything scored further down describes only the calls we have read. This is what that leaves out.</p>
+      <p class="lede">Scores below cover only the calls we have read.</p>
       <div class="fn" style="margin-bottom:16px">
         ${[["Signed up for this webinar",UNIV.length,null,"univ"],
            ["Came to the live webinar",live.length,UNIV.length,"live"],
            ["Marked attended on another day",offd.length,UNIV.length,"offd"],
            ["Did not come at all",nsAll.length,UNIV.length,"ns"],
-           ["Calls we have read",VROWS.length,live.length+offd.length,"read"],
+           ["Calls we have read",ROWS.length,live.length+offd.length,"read"],
            ["Attended but calls not read",unan.length,live.length+offd.length,"unan"]]
           .map(([lbl,n,base,key],i)=>`
           <div class="fnrow" onclick="cbDrill('${key}')">
@@ -6094,14 +6258,14 @@ function funnelDrill(i){
   if(f.grp==="Non-IQL"){drill("Funnel step "+(i+1),f.label,f.note,NONIQL,"nq");return}
   if(f.grp==="IQL only"){
     const map={6:ROWS,7:UNIV.filter(r=>r.cohort==="ATTENDED_UNANALYSED"),
-      8:VROWS.filter(r=>r.call_type==="SUBSTANTIVE_CONVERSATION"),
-      9:VROWS.filter(r=>r.call_type==="WEBINAR_REMINDER_ONLY"),
-      10:VROWS.filter(r=>r.call_type==="NO_CALLS_IN_SCOPE"),
-      11:VROWS.filter(r=>r.framing_flag&&r.framing_flag!=="NOT_APPLICABLE"),
-      12:VROWS.filter(r=>r.framing_flag==="COMPLIANT"),
-      13:VROWS.filter(r=>["CREATED","PARTIAL"].includes(r.urgency_flag)),
-      14:VROWS.filter(r=>r.next_step_status==="DEFINED"),
-      15:VROWS.filter(r=>["HOT","WARM"].includes(r.temperature))};
+      8:ROWS.filter(r=>r.call_type==="SUBSTANTIVE_CONVERSATION"),
+      9:ROWS.filter(r=>r.call_type==="WEBINAR_REMINDER_ONLY"),
+      10:ROWS.filter(r=>r.call_type==="NO_CALLS_IN_SCOPE"),
+      11:ROWS.filter(r=>r.framing_flag&&r.framing_flag!=="NOT_APPLICABLE"),
+      12:ROWS.filter(r=>r.framing_flag==="COMPLIANT"),
+      13:ROWS.filter(r=>["CREATED","PARTIAL"].includes(r.urgency_flag)),
+      14:ROWS.filter(r=>r.next_step_status==="DEFINED"),
+      15:ROWS.filter(r=>["HOT","WARM"].includes(r.temperature))};
     const rows=map[i]||ROWS;
     drill("Funnel step "+(i+1),f.label,f.note,rows, i===7?"univ":null);return}
   if(i===4){drill("Funnel step 5",f.label,f.note,UNIV.filter(r=>num(r.attended)===1),"univ");return}
@@ -6177,8 +6341,8 @@ function pageNonIQL(){
    {h:"What to do",f:r=>`<div style="max-width:400px;font-size:11.5px;color:var(--mute)">${esc(r.action)}</div>`}],
    N,"openNQ");
   // calls section
-  const read=N.filter(r=>VROWS.some(x=>String(x.hubspot_id)===String(r.hubspot_id)));
-  const rows=VROWS.filter(x=>N.some(r=>String(r.hubspot_id)===String(x.hubspot_id)));
+  const read=N.filter(r=>ROWS.some(x=>String(x.hubspot_id)===String(r.hubspot_id)));
+  const rows=ROWS.filter(x=>N.some(r=>String(r.hubspot_id)===String(x.hubspot_id)));
   window._NQC=rows;
   h+=`<h3 style="margin-top:26px;font-size:16px;font-weight:800;letter-spacing:-.02em">10.4 · Their calls</h3>`;
   if(!rows.length){
@@ -6673,7 +6837,7 @@ function pageUpsell(){
   const came=ES.filter(r=>num(r.attended)===1);
   const fde=UNIV.filter(r=>num(r.enrolled_in_fde)===1);
   window._ES=ES;
-  const nxt={}; VROWS.forEach(r=>nxt[String(r.hubspot_id)]=r.recommended_next_action);
+  const nxt={}; ROWS.forEach(r=>nxt[String(r.hubspot_id)]=r.recommended_next_action);
   let h=`<section><div class="eyebrow">Section 11 · Warmest people in the file</div>
    <h1 class="pg">Existing students</h1>
    <p class="lede">These already paid IK for something once, and then signed up for the FDE webinar anyway. That is
@@ -6758,7 +6922,7 @@ function pageUpsell(){
   return h+"</section>";}
 function openES(i){
   const r=window._ES[i];
-  const full=VROWS.find(x=>String(x.hubspot_id)===String(r.hubspot_id));
+  const full=ROWS.find(x=>String(x.hubspot_id)===String(r.hubspot_id));
   if(full)leadCard(full); else leadCardUniv(r);
 }
 
@@ -7169,7 +7333,7 @@ async function loadSeed(){
 
 function render(){
   applyFilters();applyNSFilters();renderNav();
-  const P={lead:pageLead,insights:pageInsights,resources:pageResources,master:pageMaster,notfit:pageNotFit,jobs:pageJobs,webinars:pageWebinars,audit:pageAudit,webinar:pageWebinar,
+  const P={lead:pageLead,insights:pageInsights,conversion:pageConversion,resources:pageResources,master:pageMaster,notfit:pageNotFit,jobs:pageJobs,webinars:pageWebinars,audit:pageAudit,webinar:pageWebinar,
    campaigns:pageCampaigns,t500:pageTalent500,calling:pageCalling,funnel:pageFunnel,explore:pageExplore,plan:pagePlan,scen:pageScen,coach:pageCoach,org:pageOrg,pa:pagePA,discipline:pageDisc,
    voice:pageVoice,queue:pageQueue,noshow:pageNoShow,noniql:pageNonIQL,upsell:pageUpsell,segments:pageSeg,
    leads:pageLeads,analyse:pageCallAnalysis,rec:pageRecordings,

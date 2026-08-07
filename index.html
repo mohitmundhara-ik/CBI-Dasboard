@@ -356,6 +356,11 @@ mark{background:#FFE79B;color:var(--ink);font-weight:700;padding:1px 3px;border-
 .wvgrid td{padding:7px 9px}
 select[multiple]{padding:5px;font-size:12px}
 @media(max-width:1180px){.wvgrid{grid-template-columns:1fr}}
+.mechip{margin-left:auto;display:flex;align-items:center;gap:5px;font-size:11px;
+  background:var(--s100);border:1px solid var(--s200);border-radius:20px;padding:4px 12px;
+  color:var(--body);white-space:nowrap}
+.mechip .mono{font-size:11px;font-weight:600;color:var(--ink)}
+.mechip a:hover{text-decoration:underline}
 .hide{display:none!important}
 @media(max-width:1080px){aside.side{display:none}.wrap{padding:18px 15px 80px}
   .hbar .nm{width:130px}.fnrow .lb{width:150px}}
@@ -371,9 +376,10 @@ select[multiple]{padding:5px;font-size:12px}
   <main>
     <div class="topbar">
       <span class="eyebrow" id="srcChip">Loaded · 29 Jul webinar</span>
+      <span class="mechip" id="meChip" style="display:none"></span>
       <span class="mono mute" style="font-size:11px" id="stamp"></span>
       <div style="flex:1"></div>
-      <button onclick="go('data')">Connect live data</button>
+      <button onclick="go('upload')">Load data</button>
       <button onclick="go('upload')">Upload</button>
       <button class="pri" onclick="exportCSV()">Download this view</button>
     </div>
@@ -2562,129 +2568,26 @@ function gAuto(){
 
 /* ---------- the panel ---------- */
 function googlePanel(){
-  const base=cfgGet("cbi:apiBase",VERCEL_DEFAULT), key=cfgGet("cbi:apiKey",""),
-        cid=cfgGet("cbi:clientId",""), sid=cfgGet("cbi:sheetId",SHEET_ID_DEFAULT),
-        lnk=cfgGet("cbi:link","https://docs.google.com/spreadsheets/d/"+SHEET_ID_DEFAULT+"/edit");
-  const onVercel = (typeof location !== "undefined" && String(location.protocol||"").startsWith("http"));
+  const base=cfgGet("cbi:apiBase",VERCEL_DEFAULT), key=cfgGet("cbi:apiKey","");
   return `
-  <div class="callout info" style="margin-bottom:16px">
-    <h4>Which one do you need?</h4>
-    <p><b>If the sheet must stay private</b> — and it does — you have two choices and both keep it private.
-    <b>Option A</b> uses your own Google login, so you see exactly the sheets you already have access to.
-    <b>Option B</b> shares the sheet with a robot address instead, so nobody has to log in at all and it keeps
-    working overnight. <b>You have already created the robot</b>, so B is the shorter path from here.</p>
-  </div>
-
-  <div class="card" style="margin-bottom:14px;border-left:3px solid var(--cy)">
-    <h3>13.1 · Option A — sign in with your own Google account</h3>
-    <div class="sub">You log in, the tool reads the sheet as you. Nothing is shared publicly and nothing is stored —
-    the token lives in this tab and dies when you close it.</div>
-    ${onVercel?"":`<div class="callout" style="margin:0 0 12px"><h4>This will not work from here</h4>
-      <p>You have opened this as a file on your machine. Google will refuse to sign you in because
-      <span class="mono">file://</span> is not an address it can verify. Open
-      <span class="mono">${VERCEL_DEFAULT}</span> and use this box there.</p></div>`}
-    <div style="font-size:12.5px;color:var(--body);line-height:1.9;margin-bottom:10px">
-      <b>Set it up once:</b><br>
-      <b>1.</b> Google Cloud Console → your <span class="mono">fde-504106</span> project →
-        APIs &amp; Services → Library → enable <b>Google Sheets API</b>.<br>
-      <b>2.</b> APIs &amp; Services → <b>OAuth consent screen</b>. Pick <b>Internal</b> if everyone is on the same
-        Google Workspace — that skips Google's review entirely. Add the scope
-        <span class="mono">.../auth/spreadsheets.readonly</span>.<br>
-      <b>3.</b> Credentials → Create credentials → <b>OAuth client ID</b> → <b>Web application</b>.<br>
-      <b>4.</b> Under <b>Authorised JavaScript origins</b> add exactly this, nothing after it:
-        <span class="mono">${VERCEL_DEFAULT}</span>
-        <button class="gh" style="padding:1px 7px;font-size:11px" onclick="gCopy('${VERCEL_DEFAULT}','The origin')">copy</button><br>
-      <b>5.</b> Copy the Client ID it gives you into the box below.
-    </div>
-    <div class="ctl">
-      <label class="f">OAuth Client ID</label>
-      <input type="text" id="gClientId" placeholder="…apps.googleusercontent.com" value="${esc(cid)}" style="min-width:340px">
-      <label class="f">Sheet ID</label>
-      <input type="text" id="gSheetId" value="${esc(sid)}" style="min-width:280px">
-    </div>
-    <div class="ctl">
-      <button class="pri" onclick="gSignIn()">Sign in with Google</button>
-      <button onclick="pullViaToken()">Pull the sheet</button>
-      <button class="gh" onclick="gSignOut()">Sign out</button>
-    </div>
-  </div>
-
   <div class="card" style="margin-bottom:14px;border-left:3px solid var(--grn)">
-    <h3>13.2 · Option B — share the sheet with your service account</h3>
-    <div class="sub">You already made this one. Nobody logs in, the sheet stays private, and it keeps refreshing
-    when you are away from your desk. <b>This is the one to run day to day.</b></div>
-    <div class="callout ok" style="margin:0 0 12px">
-      <h4>Step one, and it is the only one that grants access</h4>
-      <p>Open the sheet → <b>Share</b> → paste this address → set it to <b>Viewer</b> → untick "Notify people"
-      (it is a robot, it has no inbox) → Share.</p>
-      <p style="margin-top:8px"><span class="mono" style="font-size:12.5px;background:var(--s100);padding:4px 9px;border-radius:5px">${SA_EMAIL_DEFAULT}</span>
-      <button class="gh" style="padding:2px 9px;font-size:11px" onclick="gCopy('${SA_EMAIL_DEFAULT}','The service account address')">copy</button></p>
-    </div>
-    <div style="font-size:12.5px;color:var(--body);line-height:1.9;margin-bottom:10px">
-      <b>Then, once:</b><br>
-      <b>1.</b> Commit <span class="mono">api/sheet.js</span> to the repo at exactly that path and push.<br>
-      <b>2.</b> Vercel → Settings → Environment Variables, add four:
-        <span class="mono" style="display:block;margin:6px 0 6px 18px;line-height:2">
-        GOOGLE_SA_EMAIL = ${SA_EMAIL_DEFAULT}<br>
-        GOOGLE_SA_KEY &nbsp;&nbsp;= the <b>private_key value only</b> from the JSON. Not the whole file, no quotes around it.<br>
-        SHEET_ID &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= ${SHEET_ID_DEFAULT}<br>
-        API_KEY &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= any long random string you invent</span>
-      <b>3.</b> <b>Redeploy.</b> Vercel only reads new variables on a fresh build — this is the step people miss.<br>
-      <b>4.</b> Come back here, fill the two boxes, and press <b>Test the connection</b>.
-    </div>
+    <h3>Pull the Live DB straight from the Google Sheet</h3>
+    <div class="sub">The sheet is shared with <span class="mono">${SA_EMAIL_DEFAULT}</span>, so this reads it with no
+    login and the sheet stays private.</div>
     <div class="ctl">
       <label class="f">Vercel URL</label>
-      <input type="url" id="gApiBase" placeholder="${VERCEL_DEFAULT}" value="${esc(base)}" style="min-width:320px">
+      <input type="url" id="gApiBase" value="${esc(base)}" style="min-width:300px">
       <label class="f">API key</label>
-      <input type="text" id="gApiKey" placeholder="the API_KEY you set in Vercel" value="${esc(key)}" style="min-width:220px">
-    </div>
-    <div class="ctl">
-      <button class="pri" onclick="pullViaApi()">Pull the sheet now</button>
-      <button onclick="gDiagnose()">Test the connection</button>
-      <button onclick="gDebug()">Inspect the key</button>
-      <label class="f">Refresh on its own</label>
+      <input type="text" id="gApiKey" value="${esc(key)}" style="min-width:200px">
+      <button class="pri" onclick="pullViaApi()">Pull the sheet</button>
+      <button onclick="gDiagnose()">Test it</button>
+      <label class="f">Refresh</label>
       <select id="gEvery" onchange="gAuto()">
-        <option value="0">Off</option><option value="15">Every 15 min</option>
-        <option value="30">Every 30 min</option><option value="60">Hourly</option></select>
+        <option value="0">Off</option><option value="30">Every 30 min</option>
+        <option value="60">Hourly</option></select>
       <span class="mono mute" style="font-size:11px" id="gWhen">not pulled yet</span>
     </div>
     <div class="log" id="gLog"></div>
-  </div>
-
-  <div class="card" style="margin-bottom:14px">
-    <h3>13.3 · Option C — a public link</h3>
-    <div class="sub">Only if your policy allows it. Anyone holding the link can read the sheet, so this is the wrong
-    choice for lead data with names or numbers in it. Left here because it needs nothing installed.</div>
-    <div class="ctl">
-      <label class="f">Sheet link</label>
-      <input type="url" id="gLink" placeholder="https://docs.google.com/spreadsheets/d/…" value="${esc(lnk)}" style="min-width:420px">
-      <button onclick="pullBySheetLink()">Connect the sheet</button>
-    </div>
-    <div class="mute" style="font-size:11.5px">Needs the sheet set to "Anyone with the link can view". If your admin
-    blocks that, use A or B above — both work with the sheet fully private.</div>
-    <div class="log" id="gLog3"></div>
-  </div>
-
-  <div class="card" style="margin-bottom:14px">
-    <h3>13.4 · If it will not connect</h3>
-    <div class="sub" style="margin:0;line-height:1.9">
-      <b style="color:var(--ink)">Sign-in popup opens then closes with nothing happening</b> — the address you are on
-      is not in Authorised JavaScript origins. It has to match character for character, no trailing slash.<br>
-      <b style="color:var(--ink)">"Access blocked: this app is not verified"</b> — set the consent screen to Internal,
-      or add yourself as a test user.<br>
-      <b style="color:var(--ink)">Signed in fine but the sheet 403s</b> — that Google account cannot open the sheet.
-      Share it with them, or sign in as someone who can.<br>
-      <b style="color:var(--ink)">/api/sheet returns 404</b> — the function is not deployed. It must sit at exactly
-      <span class="mono">api/sheet.js</span> in the repo root.<br>
-      <b style="color:var(--ink)">500 mentioning SA_EMAIL or SA_KEY</b> — the variables are saved but you have not
-      redeployed since.<br>
-      <b style="color:var(--ink)">"DECODER routines::unsupported"</b> — the private key is mangled. Press
-      <b>Inspect the key</b> above. It reports the shape of the key without ever showing it, and tells you which of the
-      usual mistakes it is. Nine times out of ten it is the whole JSON file in the box instead of just the
-      <span class="mono">private_key</span> value, or quotes left around it.<br>
-      <b style="color:var(--ink)">"permission" or "not found" from the API</b> — the sheet is not shared with
-      <span class="mono">${SA_EMAIL_DEFAULT}</span> yet. That share is the only thing that grants access.
-    </div>
   </div>`;
 }
 
@@ -3527,7 +3430,7 @@ const TABS=[
  ["THE PICTURE",[["lead","Summary"],["webinar","Webinar view"],["funnel","Funnel"],["explore","Explore"],["plan","Do this next"],["scen","Lead states"]]],
  ["THE TEAM",[["coach","PA coach"],["org","FDE org chart"],["pa","Advisors"],["discipline","Wrong info given"],["voice","What leads said"]]],
  ["THE LEADS",[["queue","Call list"],["noshow","No shows"],["noniql","Non-IQL leads"],["upsell","Existing students"],["segments","Groups"],["leads","Every lead"]]],
- ["KEEP IT FRESH",[["analyse","Call analysis"],["rec","Recordings"],["cover","Coverage & uploads"],["trend","Track progress"],["upload","Upload data"],["data","Connect live data"]]],
+ ["KEEP IT FRESH",[["analyse","Call analysis"],["rec","Recordings"],["cover","Coverage & uploads"],["trend","Track progress"],["upload","Upload data"]]],
 ];
 const TABCOUNT=()=>({
  queue:VIEW.length, noshow:UNIV.filter(r=>r.cohort==="NO_SHOW").length,
@@ -4760,11 +4663,34 @@ function cbDrill(k){
 }
 
 /* ============ 12 UPLOAD ============ */
+/* ============ WHO IS SIGNED IN ============ */
+let ME=null;
+async function loadMe(){
+  try{
+    const r=await fetch("/api/whoami"); const j=await r.json();
+    ME=j.signedIn?j:null;
+    const el=$("meChip");
+    if(el&&ME){
+      const exp=new Date(ME.expiresAt);
+      el.innerHTML=`<span class="mono">${esc(ME.email)}</span>
+        <span class="mute" style="font-size:10px">· until ${exp.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</span>
+        <a onclick="signOut()" style="cursor:pointer;margin-left:8px;color:var(--cy-d);font-weight:600">sign out</a>`;
+      el.style.display="";
+    }
+  }catch(e){ /* running as a local file, no server to ask */ }
+}
+async function signOut(){
+  try{ await fetch("/api/auth?logout=1"); location.reload() }catch(e){}
+}
+
 function pageUpload(){
   return `<section><div class="eyebrow">Section 12 · Every day</div><h1 class="pg">Upload data</h1>
-   <p class="lede">Drag in the call file (CSV, XLSX or XLS). Drag in the Live DB file at the same time and the tool matches
-   them on <span class="mono">hubspot_id = lead_email</span>, rebuilds everything and re-scores every lead. Load it as many
-   times a day as you like — each one is saved so you can see progress.</p>
+   <p class="lede">Two ways in. Pull the Live DB from the Google Sheet, or drag files in. The call analysis always
+   comes from a file — the sheet holds leads, not calls.</p>
+   ${googlePanel()}
+   <h3 style="margin-top:20px;font-size:15px;font-weight:800;letter-spacing:-.02em">Or drag files in</h3>
+   <p class="lede" style="margin-bottom:12px">Drag in the call file. Drag in the Live DB at the same time and the tool
+   matches them on <span class="mono">hubspot_id = lead_email</span>, then re-scores every lead.</p>
    <div class="grid" style="grid-template-columns:1.25fr 1fr">
    <div>
      <div class="drop" id="drop" onclick="$('file').click()">
@@ -4796,116 +4722,6 @@ function pageUpload(){
    <b style="color:var(--ink)">Lead state</b> — 18 states, and every lead is in exactly one, so the counts always add up.<br>
    This is the same logic as the Excel file, so every number in both places matches exactly.
    </div></div></section>`;}
-
-/* ============ 13 DATA SOURCES ============ */
-function pageData(){
-  return `<section><div class="eyebrow">Section 13 · Live data</div><h1 class="pg">Connect live data</h1>
-   <p class="lede">Three ways to read the Google Sheet into this tool, easiest first.
-   <b>Start with 13.1</b> — it takes two minutes and needs nothing installed. Move to 13.2 when you want the sheet to
-   stay private. BigQuery and Salesforce are answered underneath.</p>
-
-   ${googlePanel()}
-   <div class="card" style="margin-bottom:14px"><h3>13.5 · Or a published CSV link</h3>
-   <div class="sub">Point this at any web link that gives back a CSV or JSON file. The tool pulls it in, re-scores everything,
-   and can keep pulling it on a timer. This is the easy way to get live BigQuery data in here.</div>
-   <div class="ctl">
-     <label class="f">Call file link</label>
-     <input type="url" id="urlA" placeholder="https://docs.google.com/spreadsheets/d/e/…/pub?gid=0&single=true&output=csv" style="min-width:430px">
-     <label class="f">Live DB link</label>
-     <input type="url" id="urlB" placeholder="optional - the second published sheet" style="min-width:330px">
-   </div>
-   <div class="ctl">
-     <label class="f">Refresh on its own</label>
-     <select id="refMin"><option value="0">Off</option><option value="5">Every 5 min</option>
-       <option value="15">Every 15 min</option><option value="30">Every 30 min</option><option value="60">Hourly</option></select>
-     <button class="pri" onclick="fetchLive()">Pull it in now</button>
-     <button onclick="stopLive()">Stop refreshing</button>
-     <span class="mono mute" style="font-size:11px" id="liveStatus">idle</span>
-   </div>
-   <div class="log" id="liveLog"></div></div>
-
-   <div class="grid" style="grid-template-columns:1fr 1fr">
-   <div class="card"><h3>13.6 · BigQuery — what is actually possible</h3>
-   <div class="sub">A single file like this cannot talk to BigQuery directly. There is no safe way to do it — the login needs
-   a redirect, or a key file, and a key pasted in here would be readable by anyone you send the file to. Browsers also block
-   the request. So you always need something sitting in the middle. Three ways, easiest first.</div>
-   <div style="font-size:12.5px;line-height:1.8;color:var(--body)">
-     <b style="color:var(--ink)">Option A — a Google Sheet linked to BigQuery.</b> Easiest. No coding.<br>
-     In Google Sheets use <span class="mono">Data → Data connectors → Connect to BigQuery</span>, point it at your table and set a
-     refresh schedule. Then <span class="mono">File → Share → Publish to web → CSV</span>. Paste that URL into 13.1 above.
-     BigQuery refreshes the sheet, and the sheet refreshes this tool.<br>
-     <span style="color:var(--red)">Watch out:</span> anyone with that link can read it. Keep names, emails and phone numbers out of
-     that sheet — only publish HubSpot IDs and the call fields.<br><br>
-     <b style="color:var(--ink)">Option B — a small Google script.</b> About 15 lines. No server needed.<br>
-     Attach a script to the sheet that sends the rows back as JSON and asks for a password in the link. Deploy it as
-     "run as me, anyone with the link". Not open to the world, and you decide who gets the password.<br><br>
-     <b style="color:var(--ink)">Option C — a tiny server in the middle.</b> The proper answer.<br>
-     A small service (Cloud Run or Vercel) that holds the key, asks BigQuery for the data, and gives it back behind a password.
-     About forty lines of code. This is what you want once more than a few people use this.
-   </div></div>
-
-   <div class="card"><h3>13.7 · Salesforce — same answer</h3>
-   <div class="sub">Also not possible directly, for the same reasons plus one more: Salesforce needs to know the exact web
-   address the request is coming from, and a file opened on your laptop does not have one.</div>
-   <div style="font-size:12.5px;line-height:1.8;color:var(--body)">
-     <b style="color:var(--ink)">No coding.</b> Build the report in Salesforce, put it on a schedule, and send it to Google Drive or a Sheet.
-     Then it is exactly the same as Option A above, and box 13.1 can read it.<br><br>
-     <b style="color:var(--ink)">Proper way.</b> Set up a Connected App in Salesforce and let the same small server from Option C talk to it,
-     then give this tool one link that has both Salesforce fields and the call data already joined.
-     Never put Salesforce logins in this file — they would travel with it to whoever you send it to.<br><br>
-     <b style="color:var(--ink)">What you would gain.</b> Who owned the lead before, the full activity history, deal stage and which campaign
-     brought them in — none of which is in the Live DB today. That would let the tool tell the difference between a lead
-     who went quiet and one who was simply handed to someone else.
-   </div></div></div>
-
-   <div class="card" style="margin-top:14px"><h3>13.8 · Two other things</h3>
-   <div style="font-size:12.5px;line-height:1.8;color:var(--body)">
-     <b style="color:var(--ink)">Your Claude account is already connected to HubSpot, Google Drive and Slack.</b> Those work in a Claude
-     chat, not inside this file. So the quickest way to fresher data today is to ask Claude to pull from HubSpot or Drive, run the
-     call-reading prompt, and give you a file to drop into box 13.1 or the Upload page.<br><br>
-     <b style="color:var(--ink)">What the files need.</b> Wherever the data comes from, the call file needs a <span class="mono">hubspot_id</span>
-     column and the Live DB needs <span class="mono">lead_email</span> holding the same ID. Everything else is optional — the tool
-     will still work and will tell you which pages are limited.
-   </div></div></section>`;}
-
-let LIVE_TIMER=null;
-function liveLog(s,cls){const l=$("liveLog");if(!l)return;
-  l.innerHTML=`<div>${new Date().toLocaleTimeString()} — ${cls?`<${cls}>${s}</${cls}>`:s}</div>`+l.innerHTML}
-async function fetchOne(url){
-  const res=await fetch(url,{cache:"no-store"});
-  if(!res.ok)throw new Error("HTTP "+res.status);
-  const txt=await res.text();
-  const t=txt.trim();
-  if(t.startsWith("[")||t.startsWith("{")){
-    const j=JSON.parse(t);
-    return Array.isArray(j)?j:(j.rows||j.data||[]);
-  }
-  const wb=XLSX.read(t,{type:"string"});
-  return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:""});
-}
-async function fetchLive(){
-  const a=$("urlA")?.value.trim(), b=$("urlB")?.value.trim();
-  if(!a){liveLog("Enter an analysis URL first.","em");return}
-  $("liveStatus").textContent="fetching…";
-  try{
-    liveLog("Fetching analysis feed…");
-    const A=await fetchOne(a);
-    let B=null;
-    if(b){liveLog("Fetching Live DB feed…");B=await fetchOne(b)}
-    liveLog(`Analysis rows: ${A.length}${B?` · Live DB rows: ${B.length}`:""}`,"b");
-    await ingest(A,B,"live URL");
-    $("liveStatus").textContent="last fetch "+new Date().toLocaleTimeString();
-    const m=parseInt($("refMin").value,10);
-    if(m>0){clearInterval(LIVE_TIMER);LIVE_TIMER=setInterval(fetchLive,m*60000);
-      liveLog(`Auto-refresh every ${m} minutes is on.`,"b")}
-  }catch(e){
-    liveLog("Fetch failed: "+e.message,"em");
-    liveLog("Usually this means the link is not public. A Google 'Publish to web' CSV link works. A normal sheet link that ends in /edit does not.","em");
-    $("liveStatus").textContent="failed";
-  }
-}
-function stopLive(){clearInterval(LIVE_TIMER);LIVE_TIMER=null;
-  if($("liveStatus"))$("liveStatus").textContent="auto-refresh stopped";liveLog("Auto-refresh stopped.")}
 
 /* ============ INGEST ============ */
 function logMsg(s,cls){const l=$("log");if(!l)return;
@@ -5041,7 +4857,7 @@ function render(){
   const P={lead:pageLead,webinar:pageWebinar,funnel:pageFunnel,explore:pageExplore,plan:pagePlan,scen:pageScen,coach:pageCoach,org:pageOrg,pa:pagePA,discipline:pageDisc,
    voice:pageVoice,queue:pageQueue,noshow:pageNoShow,noniql:pageNonIQL,upsell:pageUpsell,segments:pageSeg,
    leads:pageLeads,analyse:pageCallAnalysis,rec:pageRecordings,
-   cover:pageCoverage,trend:pageTrend,upload:pageUpload,data:pageData};
+   cover:pageCoverage,trend:pageTrend,upload:pageUpload};
   $("page").innerHTML=P[TAB]();
   if(TAB==="coach"){const el=$("coachIn");if(el&&COACH_Q){el.focus();el.setSelectionRange(el.value.length,el.value.length)}}
   if(TAB==="upload"){
@@ -5057,7 +4873,7 @@ function render(){
 
 (async function init(){
   $("stamp").textContent=new Date().toLocaleDateString([], {day:"2-digit",month:"short",year:"numeric"});
-  await loadSeed();await loadSnaps();await loadFileLog();
+  await loadSeed();await loadSnaps();await loadFileLog();loadMe();
   if(!SNAPS.length)SNAPS=[snapOf("starting point")];
   render();
 })();

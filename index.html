@@ -418,9 +418,6 @@ h3.sec{margin:26px 0 4px;font-size:17px;font-weight:700;letter-spacing:-.01em;co
   border-bottom:1px solid var(--s200);position:sticky;top:88px;z-index:25}
 .gffield{display:flex;flex-direction:column;gap:4px}
 .gffield select{min-width:150px}
-.qjbtn{display:inline-flex;align-items:center;gap:7px;font-size:12px}
-.qjbtn kbd{font-family:'IBM Plex Mono',monospace;font-size:10px;background:var(--s100);
-  border:1px solid var(--s300);border-radius:4px;padding:1px 5px}
 .qjscrim{position:fixed;inset:0;background:rgba(11,37,69,.4);z-index:120}
 .qjbox{position:fixed;top:14vh;left:50%;transform:translateX(-50%);width:min(520px,92vw);
   background:#fff;border-radius:12px;box-shadow:0 24px 70px rgba(8,25,43,.35);z-index:121;overflow:hidden}
@@ -476,6 +473,30 @@ body.dense p.lede{font-size:13px;margin-bottom:12px}
   font-size:12px;font-weight:700;color:#922B21;white-space:nowrap}
 .rowcap{padding:11px 14px;background:var(--s50);border-top:1px solid var(--s200);
   font-size:12.5px;color:var(--mute);display:flex;align-items:center;gap:12px}
+.askbtn{display:inline-flex;align-items:center;gap:9px;font-size:13px;font-weight:700;
+  padding:6px 15px;border-radius:20px;cursor:pointer;color:#fff;border:none;
+  background:linear-gradient(100deg,var(--navy),var(--cy-d));box-shadow:0 2px 10px rgba(11,37,69,.2)}
+.askbtn:hover{background:linear-gradient(100deg,var(--cy-d),var(--cy))}
+.askbtn kbd{font-family:'IBM Plex Mono',monospace;font-size:10.5px;background:rgba(255,255,255,.22);
+  border-radius:4px;padding:2px 6px;letter-spacing:.04em}
+.askscrim{position:fixed;inset:0;background:rgba(8,25,43,.5);backdrop-filter:blur(4px);z-index:130}
+.askbox{position:fixed;top:9vh;left:50%;transform:translateX(-50%);width:min(920px,94vw);
+  max-height:82vh;background:#fff;border-radius:16px;z-index:131;overflow:hidden;
+  box-shadow:0 30px 90px rgba(8,25,43,.4);display:flex;flex-direction:column}
+.askhead{padding:16px 22px 12px;border-bottom:1px solid var(--s200)}
+.askhead input{width:100%;border:none;font-size:19px;padding:6px 0;outline:none;font-weight:600}
+.askhead input::placeholder{color:var(--faint);font-weight:400}
+.askhint{font-size:11.5px;color:var(--faint);margin-top:4px}
+.askbody{overflow:auto;padding:14px 22px 22px;flex:1}
+.asksug{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:8px;cursor:pointer;
+  font-size:13.5px;border-bottom:1px solid var(--s100)}
+.asksug:hover,.asksug.on{background:var(--cy-l)}
+.asksug .cat{font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--faint);
+  margin-left:auto;white-space:nowrap}
+.askans{font-size:14px;line-height:1.7}
+.askhero{font-size:34px;font-weight:700;letter-spacing:-.02em;color:var(--navy);
+  font-variant-numeric:tabular-nums;line-height:1.1}
+.askq{font-size:12.5px;color:var(--mute);margin-bottom:3px}
 .hide{display:none!important}
 @media(max-width:1080px){aside.side{display:none}.wrap{padding:18px 15px 80px}
   .hbar .nm{width:130px}.fnrow .lb{width:150px}}
@@ -490,22 +511,18 @@ body.dense p.lede{font-size:13px;margin-bottom:12px}
   </aside>
   <main>
     <div class="topbar">
-      <span class="eyebrow" id="srcChip">Loaded · 29 Jul webinar</span>
-      <button class="gh qjbtn" onclick="qjOpen()">Jump to… <kbd>⌘K</kbd></button>
       <span id="wbPick"></span>
-      <span id="nfChip"></span>
-      <button class="gh" style="padding:4px 11px;font-size:12px" onclick="go('master')">All leads</button>
-      <span class="mechip" id="meChip" style="display:none"></span>
-      <span class="mono mute" style="font-size:11px" id="stamp"></span>
+      <button class="askbtn" onclick="askOpen()">Ask anything <kbd>911</kbd></button>
       <div style="flex:1"></div>
-      <button onclick="go('upload')">Load data</button>
-      <button onclick="go('upload')">Upload</button>
-      <button class="pri" onclick="exportCSV()">Download this view</button>
+      <span id="nfChip"></span>
+      <span class="mechip" id="meChip" style="display:none"></span>
+      <button class="gh" onclick="exportCSV()">Download</button>
     </div>
     <div class="wrap"><div id="page"></div></div>
   </main>
 </div>
 
+<span id="srcChip" class="hide"></span><span id="stamp" class="hide"></span>
 <div class="scrim" id="scrim" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer">
   <div class="dhead">
@@ -6551,6 +6568,226 @@ function pageKnowledge(){
   return h + "</section>";
 }
 
+/* ============ ASK ============
+   Type a question, get the answer with the right chart. No model call - the
+   file is self-contained and lead data never leaves the page. It works by
+   matching the question against every field it can actually compute, so the
+   answer is always real rather than plausible. */
+
+let ASK = false, AQ = "", ASEL = 0;
+
+/* Every dimension the data can be cut by, with the words people use for it. */
+const A_DIMS = [
+  {k:"channel",              n:"channel",          w:["channel","source","where from","utm source","traffic"]},
+  {k:"UTM_Campaign",         n:"campaign",         w:["campaign","utm","ad"]},
+  {k:"work_ex",              n:"experience",       w:["experience","yoe","years","seniority","exp"]},
+  {k:"role_domain",          n:"role",             w:["role","job","designation","profile","domain"]},
+  {k:"Category",             n:"role group",       w:["category","group","function"]},
+  {k:"city",                 n:"city",             w:["city","location","geography","region","where"]},
+  {k:"pa_name_final",        n:"advisor",          w:["advisor","pa","rep","agent","who","owner","salesperson"]},
+  {k:"pod_final",            n:"team",             w:["team","pod"]},
+  {k:"lead_status",          n:"CRM status",       w:["status","stage","crm"]},
+  {k:"latest_classification",n:"CRM rating",       w:["rating","classification","grade"]},
+  {k:"interview_start_time", n:"interview timing", w:["interview","timing","urgency","when they want","intent"]},
+  {k:"webinar_batch",        n:"webinar",          w:["webinar","batch","cohort","session","masterclass"]},
+  {k:"cohort",               n:"cohort state",     w:["cohort state","attended or not"]},
+  {k:"fde_fit",              n:"FDE fit",          w:["fit","suitable","right for fde"]},
+  {k:"dcd_age",              n:"discovery age",    w:["discovery age","old discovery"]},
+];
+
+/* Every measure it can compute, with how to phrase the answer. */
+const A_MEAS = [
+  {k:"leads",     n:"leads",              w:["lead","leads","how many","volume","count","registered","registration","registrations","signup","signups","sign ups"],
+   f:g=>g.length, unit:"leads"},
+  {k:"attended",  n:"attendance",         w:["attend","attended","attendance","attendee","attendees","came","show rate","showed","turnout","turned up"],
+   f:g=>g.filter(r=>num(r.attended_live)===1).length, unit:"attended", rate:true},
+  {k:"noshow",    n:"no-shows",           w:["no show","noshow","did not come","missed","absent"],
+   f:g=>g.filter(r=>!S(r.attended_on)).length, unit:"no-shows", rate:true},
+  {k:"reached",   n:"reached",            w:["reach","reached","contacted","picked up"],
+   f:g=>g.filter(r=>num(r.Reached)>0).length, unit:"reached", rate:true},
+  {k:"connected", n:"connects",           w:["connect","connected","answered"],
+   f:g=>g.filter(r=>num(r.Connected)>0).length, unit:"connected", rate:true},
+  {k:"dcd",       n:"discovery calls",    w:["discovery","dcd","qualification call"],
+   f:g=>g.filter(r=>num(r.DCD_Flag)>0).length, unit:"discovery calls", rate:true},
+  {k:"rte",       n:"ready to enrol",     w:["ready","rte","ready to enrol","ready to enroll","hot pipeline"],
+   f:g=>g.filter(r=>num(r.RTE_Flag)>0).length, unit:"ready to enrol", rate:true},
+  {k:"sold",      n:"sales",              w:["sale","sales","sold","bought","buy","buyer","buyers","enrolled","enrolment","enrollment","convert","converted","conversion","revenue","won","closed"],
+   f:g=>g.filter(cvBought).length, unit:"sales", rate:true},
+  {k:"minutes",   n:"minutes on the phone",w:["minute","minutes","talk time","time on phone","duration"],
+   f:g=>Math.round(sumOf(g,"total_tt")), unit:"minutes"},
+  {k:"dials",     n:"dials",              w:["dial","dials","attempt","attempts","calls made"],
+   f:g=>Math.round(sumOf(g,"total_attempt")), unit:"dials"},
+  {k:"cqs",       n:"average call score", w:["call score","quality","cqs","how good","score"],
+   f:g=>{const ids=new Set(g.map(r=>String(r.hubspot_id)));
+         const c=VROWS.filter(r=>ids.has(String(r.hubspot_id))&&r.call_type==="SUBSTANTIVE_CONVERSATION");
+         return avg(c.map(r=>r.cqs).filter(v=>v!=null))||0}, unit:"out of 100"},
+];
+
+/* Parse a question into {measure, dimension, filters}. Everything unmatched
+   is ignored rather than guessed at. */
+function askParse(q){
+  const s = " " + q.toLowerCase().replace(/[^\w\s]/g," ") + " ";
+  const hit = (list) => {
+    let best = null, len = 0;
+    list.forEach(x => x.w.forEach(w => {
+      if(s.includes(" "+w+" ") || s.includes(" "+w+"s ")){ if(w.length > len){ best = x; len = w.length } }
+    }));
+    return best;
+  };
+  const meas = hit(A_MEAS);
+  const dim  = hit(A_DIMS);
+  if(!meas && !dim) return {meas:null, dim:null, filters:{}, q};
+  // any value in the data mentioned by name becomes a filter
+  const filters = {};
+  A_DIMS.forEach(d => {
+    const vals = new Set(gfBase().map(r => S(r[d.k])).filter(Boolean));
+    vals.forEach(v => {
+      const lv = v.toLowerCase();
+      if(lv.length >= 4 && s.includes(" "+lv+" ")) filters[d.k] = v;
+    });
+  });
+  return {meas, dim, filters, q};
+}
+
+function askRun(q){
+  const P = askParse(q);
+  if(!P.meas && !P.dim){
+    return `<div class="askq">${esc(q)}</div>
+      <div class="callout" style="margin-top:8px"><h4>I cannot answer that from this data</h4>
+      <p>It reads the leads loaded in this dashboard, so it can answer anything about volume, attendance,
+      calling, pipeline and conversion — cut by channel, campaign, experience, role, city, advisor, team,
+      status, interview timing or webinar.</p>
+      <p style="margin-top:8px">Try one of these:</p></div>
+      ${askSuggestions().slice(0,6).map(([t])=>
+        `<div class="asksug" onclick="askGo('${esc(t)}')"><span>${esc(t)}</span></div>`).join("")}`;
+  }
+  if(!P.meas) P.meas = A_MEAS[0];
+  let rows = gfBase();
+  Object.entries(P.filters).forEach(([k,v]) => { rows = rows.filter(r => S(r[k]) === v) });
+  const total = P.meas.f(rows);
+  const base = rows.length;
+
+  let out = `<div class="askq">${esc(q)}</div>`;
+  const filterNote = Object.entries(P.filters).length
+    ? ` · ${Object.entries(P.filters).map(([k,v])=>esc(v)).join(" · ")}` : "";
+
+  /* headline */
+  out += `<div class="askhero">${typeof total === "number" ? fmtN(total) : total}</div>
+    <div class="mute" style="font-size:13px;margin-bottom:16px">${esc(P.meas.unit)}${
+      P.meas.rate && base ? ` · ${(total/base*100).toFixed(1)}% of ${base} leads` : ` · out of ${base} leads`}${filterNote}</div>`;
+
+  /* cut by a dimension if one was named */
+  if(P.dim){
+    const groups = {};
+    rows.forEach(r => { const k = S(r[P.dim.k]) || "(not set)"; (groups[k]=groups[k]||[]).push(r) });
+    const data = Object.entries(groups).map(([k,g]) => ({
+      k, v: P.meas.f(g), n: g.length,
+      sub: P.meas.rate && g.length ? `${(P.meas.f(g)/g.length*100).toFixed(0)}% of ${g.length}` : "",
+    })).filter(x => x.v > 0).sort((a,b) => b.v - a.v);
+
+    if(data.length){
+      // chart chosen by the shape of the answer, not by habit
+      out += data.length <= 4
+        ? donut(data, {title:`${P.meas.n} by ${P.dim.n}`, unit:P.meas.unit})
+        : barRank(data, {title:`${P.meas.n} by ${P.dim.n}`, labelW:200, top:14,
+            note: P.meas.rate ? "Count, with the rate for that group beside it." : ""});
+
+      // and the rate view when a rate is meaningful
+      if(P.meas.rate && data.length > 1){
+        const rates = data.filter(x => x.n >= 5).map(x => ({
+          k:x.k, v:Math.round(x.v/x.n*1000)/10, sub:`${x.v} of ${x.n}`,
+        })).sort((a,b) => b.v - a.v);
+        if(rates.length > 1) out += barRank(rates, {title:`${P.meas.n} rate by ${P.dim.n}`,
+          note:"Percent within each group. Groups under five leads left out.", labelW:200, top:12});
+      }
+      window._AR = Object.values(groups);
+      out += `<div class="tw" style="margin-top:12px"><table><thead><tr>
+        <th>${esc(P.dim.n)}</th><th class="n">${esc(P.meas.n)}</th><th class="n">Leads</th>
+        <th class="n">Rate</th><th></th></tr></thead><tbody>
+        ${data.map((x,i)=>`<tr><td><b>${esc(x.k)}</b></td><td class="n"><b>${fmtN(x.v)}</b></td>
+          <td class="n">${x.n}</td><td class="n">${x.n?((x.v/x.n)*100).toFixed(1)+"%":""}</td>
+          <td><button class="gh" onclick="askDrill(${i},'${esc(x.k)}')">open</button></td></tr>`).join("")}
+      </tbody></table></div>`;
+      window._ARK = data.map(x => x.k);
+      window._ARG = data.map(x => groups[x.k]);
+    }
+  } else {
+    /* no dimension named — show the leads it refers to */
+    out += `<div class="mute" style="font-size:13px;margin-bottom:10px">
+      Add "by channel", "by advisor", "by experience" and so on to break this down.</div>`;
+  }
+
+  window._AROWS = rows;
+  out += `<div class="ctl" style="margin-top:14px">
+    <button class="pri" onclick="askShow()">Open these ${rows.length} leads</button>
+    <button onclick="askClose()">Close</button></div>`;
+  return out;
+}
+function askDrill(i, label){
+  const g = (window._ARG||[])[i] || [];
+  askClose();
+  drill("Ask", label, `${g.length} leads.`, g, "univ");
+}
+function askShow(){
+  const rows = window._AROWS || [];
+  askClose();
+  drill("Ask", "Your question", `${rows.length} leads.`, rows, "univ");
+}
+
+/* Suggestions, generated from the data that actually exists. */
+function askSuggestions(){
+  const base = [
+    ["How many leads by channel?", "volume"],
+    ["Attendance by channel", "attendance"],
+    ["Show rate by experience", "attendance"],
+    ["Sales by role", "conversion"],
+    ["Conversion by campaign", "conversion"],
+    ["Ready to enrol by advisor", "pipeline"],
+    ["Discovery calls by team", "activity"],
+    ["Minutes on the phone by advisor", "activity"],
+    ["Average call score by advisor", "quality"],
+    ["No-shows by channel", "attendance"],
+    ["Leads by city", "volume"],
+    ["Sales by experience", "conversion"],
+    ["Attendance by webinar", "attendance"],
+    ["Leads by interview timing", "intent"],
+    ["Dials by team", "activity"],
+  ];
+  const q = AQ.trim().toLowerCase();
+  if(!q) return base;
+  return base.filter(([t]) => t.toLowerCase().includes(q)).concat(
+    base.filter(([t]) => !t.toLowerCase().includes(q)).slice(0, 3));
+}
+
+function askOpen(){ ASK = true; AQ = ""; ASEL = 0; render();
+  setTimeout(()=>{ const e = $("askInput"); if(e) e.focus() }, 40) }
+function askClose(){ ASK = false; render() }
+function askType(v){ AQ = v; askRefresh() }
+function askGo(q){ AQ = q; askRefresh(true) }
+function askRefresh(answer){
+  const b = $("askBody"); if(!b) return;
+  const inp = $("askInput"); if(inp && inp.value !== AQ) inp.value = AQ;
+  if(answer && AQ.trim()){ b.innerHTML = `<div class="askans">${askRun(AQ)}</div>`; return }
+  b.innerHTML = askSuggestions().map(([t,c],i) =>
+    `<div class="asksug ${i===ASEL?"on":""}" onclick="askGo('${esc(t)}')">
+       <span>${esc(t)}</span><span class="cat">${esc(c)}</span></div>`).join("");
+}
+function askPanel(){
+  if(!ASK) return "";
+  return `<div class="askscrim" onclick="askClose()"></div>
+  <div class="askbox">
+    <div class="askhead">
+      <input id="askInput" placeholder="Ask anything — try &quot;sales by experience&quot;"
+        value="${esc(AQ)}" oninput="askType(this.value)"
+        onkeydown="if(event.key==='Enter'){askGo(this.value)}if(event.key==='Escape')askClose()">
+      <div class="askhint">Enter to answer · Esc to close · it reads your loaded data, nothing leaves this page</div>
+    </div>
+    <div class="askbody" id="askBody">${askSuggestions().map(([t,c],i)=>
+      `<div class="asksug ${i===0?"on":""}" onclick="askGo('${esc(t)}')">
+         <span>${esc(t)}</span><span class="cat">${esc(c)}</span></div>`).join("")}</div>
+  </div>`;
+}
+
 /* ============ NAV ============ */
 /* Ordered by how often it gets opened, not by topic. A page you need every
    morning should not sit below one you open once a month. */
@@ -7828,7 +8065,7 @@ function render(){
    analyse:pageCallAnalysis,rec:pageRecordings,
    cover:pageCoverage,trend:pageTrend,upload:pageUpload};
   $("page").innerHTML=P[TAB]();
-  { const gw=$("gfWrap"); if(gw) gw.innerHTML=gfBar()+qjPanel();
+  { const gw=$("gfWrap"); if(gw) gw.innerHTML=gfBar()+qjPanel()+askPanel();
     const wp=$("wbPick"); if(wp) wp.innerHTML=wbPicker();
     const nf=$("nfChip"); if(nf) nf.innerHTML=nfChip(); }
   if(TAB==="coach"){const el=$("coachIn");if(el&&COACH_Q){el.focus();el.setSelectionRange(el.value.length,el.value.length)}}
@@ -7846,9 +8083,18 @@ function render(){
 (async function init(){
   $("stamp").textContent=new Date().toLocaleDateString([], {day:"2-digit",month:"short",year:"numeric"});
   try{ DENSE=!!localStorage.getItem("cbi:dense"); if(DENSE)document.body.classList.add("dense") }catch(e){}
+  /* Typing 9-1-1 anywhere outside a field opens Ask. Cmd+K still works. */
+  let keybuf="";
   document.addEventListener("keydown",e=>{
-    if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){ e.preventDefault(); qjOpen() }
-    if(e.key==="Escape"&&QJ) qjClose();
+    const t=e.target&&e.target.tagName;
+    const typing = t==="INPUT"||t==="TEXTAREA"||t==="SELECT";
+    if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){ e.preventDefault(); askOpen(); return }
+    if(e.key==="Escape"){ if(ASK)askClose(); if(QJ)qjClose(); return }
+    if(typing) return;
+    if(/^[0-9]$/.test(e.key)){
+      keybuf=(keybuf+e.key).slice(-3);
+      if(keybuf==="911"){ keybuf=""; askOpen() }
+    } else keybuf="";
   });
   await resLoad();
   await jobsLoad();

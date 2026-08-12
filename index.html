@@ -1543,8 +1543,7 @@ function pageExplore(){
   const chips=Object.entries(XF);
   const groups=[...new Set(DIMS.concat(MULTI).map(d=>d.g))];
 
-  let h=`<section><div class="eyebrow">Section 3 · Click anything to filter</div>
-   <h1 class="pg">Explore</h1>
+  let h=`<section><h1 class="pg">Explore</h1>
    <p class="lede">One master table with every lead and every field. Click any bar to filter down to those leads.
    Click again to remove it. Filters stack, so you can build "Full Stack, 9-15 years, came from Talent 500, no next
    step agreed" in four clicks and get the exact list to work. The lead table at the bottom always shows what you
@@ -1952,8 +1951,7 @@ function pageCoach(){
   const hits=COACH_Q?matchCards(COACH_Q):[];
   const topics=[...new Set(CARDS.map(c=>c.topic))];
   window.__NONEXT=VROWS.filter(r=>r.next_step_status==="NOT_DEFINED").length;
-  let h=`<section><div class="eyebrow">Section 8 · Ask before you dial</div>
-   <h1 class="pg">PA coach</h1>
+  let h=`<section><h1 class="pg">PA coach</h1>
    <p class="lede">Type a question the way you would ask a colleague. Everything here is already inside this file —
    nothing is sent anywhere and no login is needed. The answers are built from <b>${KB.meta.total} real Forward Deployed
    Engineer job ads</b> on LinkedIn, our own <b>${KB.calls.read}</b> read calls, and IK's own course material.</p>
@@ -2090,8 +2088,7 @@ const THIN_N=5;   // below this many ads, say so instead of pretending
 function pageOrg(){
   const O=ORG, M=O.meta;
   const maxN=Math.max(...O.ladder.map(l=>l.n));
-  let h=`<section><div class="eyebrow">Section 12 · What the market looks like</div>
-   <h1 class="pg">FDE org chart — India</h1>
+  let h=`<section><h1 class="pg">FDE org chart — India</h1>
    <p class="lede">This is not a guess. It is built from <b>${M.total} real Forward Deployed Engineer job ads</b>,
    <b>${M.india}</b> of them in India, across <b>${M.companies}</b> companies, posted between ${M.frm} and ${M.to}.
    The levels come from the titles companies actually use, the years come from the requirement lines in the ads, and
@@ -2322,8 +2319,7 @@ function pageCoverage(){
   const last=FILELOG[0];
   const xw=CROSSWEB, out=xw.filter(x=>!x.in_fde_cohort);
 
-  let h=`<section><div class="eyebrow">Section 14 · What is done, what is left</div>
-   <h1 class="pg">Coverage &amp; uploads</h1>
+  let h=`<section><h1 class="pg">Coverage &amp; uploads</h1>
    <p class="lede">What has been read, what is waiting, and every file loaded. ${leadLink({},"all leads")}</p>
    <div class="callout ${pct0>=80?"ok":""}">
      <h4>${C.done} of ${C.total} done. ${C.todo} still to read.</h4>
@@ -2338,6 +2334,10 @@ function pageCoverage(){
    </div>`;
 
   window._CV={};
+  h+=barRank(C.rows.map(r=>({k:r.label, v:r.n,
+    color:r.state==="DONE"?"#1E8449":r.state==="TODO"?"#B9770E":"#6C7A89"})),
+    {title:"What has been read, and what has not", labelW:250,
+     note:"Green is done. Amber is waiting. Every quality number is out of the green."});
   h+=`<div class="tw" style="margin-top:16px"><table><thead><tr>
     <th></th><th>Group</th><th class="n">Leads</th><th class="n">Share</th><th>What it means</th></tr></thead><tbody>`;
   C.rows.forEach((r,i)=>{
@@ -2885,8 +2885,7 @@ function pageWebinar(){
     ns: reg.filter(r=>r.cohort==="NO_SHOW")};
 
   const attRate = pct(att.length, reg.length);
-  let h=`<section><div class="eyebrow">Section 2 · One webinar, every number</div>
-   <h1 class="pg">Webinar view</h1>
+  let h=`<section><h1 class="pg">Webinar view</h1>
    <p class="lede">Same tables twice: <b>registered</b> left, <b>came</b> right. ${leadLink({},"all leads")}</p>
    <div class="ctl">
      <label class="f">Webinar</label>
@@ -3279,8 +3278,7 @@ function pageCallAnalysis(){
   const keys = [];
   CA.dims.forEach(d=>String(d.keys).split("|").map(x=>x.trim()).filter(Boolean).forEach(k=>{if(!keys.includes(k))keys.push(k)}));
 
-  let h=`<section><div class="eyebrow">Call analysis</div>
-   <h1 class="pg">Run an analysis</h1>
+  let h=`<section><h1 class="pg">Run an analysis</h1>
    <p class="lede">Pick who to analyse, say what you want to know, and get a prompt back in the house format —
    same section order, same schema style, every time. Then run it against the agent below.</p>
 
@@ -3499,8 +3497,7 @@ function stExport(){
 
 function pageRecordings(){
   const d=ST.data;
-  let h=`<section><div class="eyebrow">Salestrail</div>
-   <h1 class="pg">Call recordings</h1>
+  let h=`<section><h1 class="pg">Call recordings</h1>
    <p class="lede">Pulls the call log and the recordings straight from Salestrail. Credentials stay on the server.</p>
 
    <div class="callout" style="margin-bottom:14px">
@@ -3711,8 +3708,7 @@ function pageWebinars(){
     enr:a.enr+w.enrolled, mins:a.mins+w.minutes}),
     {reg:0,live:0,never:0,reached:0,dcd:0,rte:0,enr:0,mins:0});
 
-  let h=`<section><div class="eyebrow">Every webinar</div>
-   <h1 class="pg">Webinars</h1>
+  let h=`<section><h1 class="pg">Webinars</h1>
    <p class="lede">Click one to point the dashboard at it. ${leadLink({},"or open all leads")}</p>`;
 
   h+=`<div class="tw"><table><thead><tr>
@@ -3738,6 +3734,18 @@ function pageWebinars(){
     <td class="n"><b>${tot.enr}</b></td><td class="n"><b>${Math.round(tot.mins)}</b></td><td></td></tr>
     </tbody></table></div>`;
 
+  if(l.length>1){
+    h+=`<h3 class="sec">How each webinar performed</h3>
+      ${lineChart([
+        {k:"Registered", pts:l.map(w=>({x:w.label.slice(0,6), y:w.registered}))},
+        {k:"Came live",  pts:l.map(w=>({x:w.label.slice(0,6), y:w.attended_live}))},
+        {k:"Ready to enrol", pts:l.map(w=>({x:w.label.slice(0,6), y:w.rte}))},
+      ], {title:"Volume across webinars", note:"Absolute counts. Watch the gap between the lines."})}
+      ${barRank(l.map(w=>({k:w.label, v:Math.round(w.attended_live/Math.max(w.registered,1)*1000)/10,
+        sub:`${w.attended_live} of ${w.registered}`,
+        color:w.attended_live/Math.max(w.registered,1)>=.5?"#1E8449":"#B9770E"})),
+        {title:"Show rate by webinar", note:"The single clearest quality measure.", labelW:150})}`;
+  }
   // side by side
   if(l.length>1){
     h+=`<h3 style="margin-top:24px;font-size:16px;font-weight:800;letter-spacing:-.02em">Against each other</h3>
@@ -3784,8 +3792,7 @@ function pageWebinars(){
 /* ---------------- the audit trail ---------------- */
 function pageAudit(){
   const d = (typeof AUDIT !== "undefined") ? AUDIT : null;
-  let h=`<section><div class="eyebrow">Audit</div>
-   <h1 class="pg">What changed</h1>
+  let h=`<section><h1 class="pg">What changed</h1>
    <p class="lede">Every load compared against the one before it, lead by lead.</p>`;
 
   h+=`<div class="callout info"><h4>Why this page exists</h4>
@@ -4162,23 +4169,29 @@ function pageCampaigns(){
   });
   h += `</tbody></table></div>`;
 
-  h += `<h3 class="sec">The funnel for everyone</h3>
-   <p class="lede">Lead generated at the top, because that is where the spend goes.</p>
+  h += `<h3 class="sec">Volume against quality</h3>
+   ${scatter(rows.filter(r=>r.leads>=5).map(r=>({
+     x:r.leads, y:Math.round(r.showRate*1000)/10, r:Math.sqrt(r.mins||1)/2.4,
+     label:S(r.k).slice(0,14),
+     color:r.showRate>=.55?"#1E8449":r.showRate<.35?"#C0392B":PAL[0]})),
+     {xLabel:"Leads sent", yLabel:"Show rate %",
+      yBand:Math.round((UNIV.filter(x=>num(x.attended_live)===1).length/Math.max(UNIV.length,1))*1000)/10,
+      bandLabel:"overall show rate",
+      title:"Every source, volume against show rate",
+      note:"Bubble is minutes spent calling them. Bottom-right is high volume, low quality."})}
+   <h3 class="sec">The funnel for everyone</h3>
    ${funnelHtml(UNIV, "cmp")}`;
 
-  const top = rows.slice(0, 6);
+  const top = rows.slice(0, 10);
   if(top.length > 1){
-    h += `<h3 class="sec">Show rate, biggest sources first</h3>
-     <div class="card"><div class="sub">How many of the leads each source sent actually turned up.
-     Volume without attendance is the expensive kind.</div>`;
-    const mx = Math.max(...top.map(r => r.leads));
-    top.forEach(r => {
-      h += `<div class="hbar"><div class="nm">${esc(r.k)}</div>
-        <div class="tr"><i style="width:${r.leads/mx*100}%;background:var(--s300)"></i>
-          <i style="width:${r.attended/mx*100}%;background:var(--cy);position:absolute;left:0;top:0"></i></div>
-        <div class="vn">${r.attended} of ${r.leads} · ${(r.showRate*100).toFixed(0)}%</div></div>`;
-    });
-    h += `</div>`;
+    h += `<div class="grid" style="grid-template-columns:1fr 1fr">
+      <div>${barRank(top.map(r=>({k:r.k, v:r.leads, sub:`${r.attended} came`})),
+        {title:"Volume by source", labelW:160})}</div>
+      <div>${barRank(top.filter(r=>r.leads>=5).map(r=>({
+        k:r.k, v:Math.round(r.showRate*1000)/10, sub:`${r.attended} of ${r.leads}`,
+        color:r.showRate>=.55?"#1E8449":r.showRate<.35?"#C0392B":PAL[0]})),
+        {title:"Show rate by source", note:"Sources under five leads left out.", labelW:160})}</div>
+    </div>`;
   }
   return h + "</section>";
 }
@@ -4248,7 +4261,20 @@ function pageTalent500(){
   h += cmpRow("Enrolled", A.enr, B.enr, "Money.");
   h += `</tbody></table></div>`;
 
-  h += `<h3 class="sec">The Talent 500 funnel</h3>${funnelHtml(t, "t500")}`;
+  h += `<h3 class="sec">Talent 500 against everyone else, side by side</h3>
+   ${stackedBar([
+     {k:"Turned up", v:{"Talent 500":A.att, "Everyone else":B.att}},
+     {k:"Discovery call", v:{"Talent 500":A.dcd, "Everyone else":B.dcd}},
+     {k:"Ready to enrol", v:{"Talent 500":A.rte, "Everyone else":B.rte}},
+     {k:"Bought", v:{"Talent 500":A.enr, "Everyone else":B.enr}},
+   ], ["Talent 500","Everyone else"], {title:"Counts either side"})}
+   ${barRank([
+     {k:"Show rate · Talent 500", v:Math.round(A.show*1000)/10, color:A.show>=B.show?"#1E8449":"#B9770E"},
+     {k:"Show rate · everyone else", v:Math.round(B.show*1000)/10, color:"#6C7A89"},
+     {k:"Discovery rate · Talent 500", v:Math.round(A.dcd/Math.max(A.leads,1)*1000)/10, color:PAL[0]},
+     {k:"Discovery rate · everyone else", v:Math.round(B.dcd/Math.max(B.leads,1)*1000)/10, color:"#6C7A89"},
+   ], {title:"The rates that matter", note:"Percent within each group.", labelW:230})}
+   <h3 class="sec">The Talent 500 funnel</h3>${funnelHtml(t, "t500")}`;
 
   // by webinar
   const byW = {};
@@ -4351,6 +4377,15 @@ function pageCalling(){
     : "Every attendee has been followed up."}</p>
     ${attNoPost.length ? `<button class="pri" style="margin-top:10px" onclick="drill('Calling','Came, never called since','Attended the webinar with zero post-webinar attempts.',window._CALL.attNoPost,'univ')">Call these</button>` : ""}
   </div>`;
+
+  h += `<h3 class="sec">The split, in one picture</h3>
+   ${stackedBar([
+     {k:"Dials", v:{"Before the webinar":Math.round(preA), "After":Math.round(posA)}},
+     {k:"Connects", v:{"Before the webinar":Math.round(preC), "After":Math.round(posC)}},
+     {k:"Minutes", v:{"Before the webinar":Math.round(preT), "After":Math.round(posT)}},
+   ], ["Before the webinar","After"], {title:"Effort either side of the webinar",
+     note: posA < preA/2 ? "Post-webinar effort is under half of pre-webinar. The push stops as interest peaks."
+                         : "Reasonably balanced either side."})}`;
 
   // by advisor
   const byPA = {};
@@ -6896,8 +6931,7 @@ function pageLead(){
   window._O={sub,comp,non,noUrg,noNext,hot,warm,resc,awa,gap,A};
   const bad=acq!=null&&acq<50;
 
-  let h=`<section><div class="eyebrow">Section 1 · The 60-second read</div>
-   <h1 class="pg">Summary</h1>
+  let h=`<section><h1 class="pg">Summary</h1>
    <p class="lede">Hover any <span class="infodot" style="vertical-align:-1px">i<span class="tip">Tells you exactly what the number counts and what it is out of.</span></span> for the definition. Click anything to see the leads behind it.</p>
    <div class="callout ${bad?'':'ok'}">
      <h4>${bad?"The problem is how we are selling, not the market.":"Calls are holding up well."}</h4>
@@ -6997,6 +7031,13 @@ function pageLead(){
       <h3 class="sec" style="margin-top:0">The funnel</h3>
       <p class="lede">Every step is out of the leads who signed up.</p>
       ${funnelHtml(UNIV,"sum")}
+      <h3 class="sec">The shape of this cohort</h3>
+      <div class="grid" style="grid-template-columns:1fr 1fr">
+        <div>${donut(Object.entries(UNIV.reduce((a,r)=>{const k=S(r.channel)||"(not set)";a[k]=(a[k]||0)+1;return a},{}))
+          .map(([k,v])=>({k,v})).sort((a,b)=>b.v-a.v).slice(0,4), {title:"Where they came from", unit:"leads"})}</div>
+        <div>${barRank(Object.entries(UNIV.reduce((a,r)=>{const k=S(r.work_ex)||"(not set)";a[k]=(a[k]||0)+1;return a},{}))
+          .map(([k,v])=>({k,v})).sort((a,b)=>b.v-a.v), {title:"Experience", labelW:110, top:7})}</div>
+      </div>
       <h3 class="sec">Who we can and cannot see</h3>
       <p class="lede">Scores below cover only the calls we have read.</p>
       <div class="fn" style="margin-bottom:16px">
@@ -7051,8 +7092,16 @@ const BLOCK_META={A:["Stop the damage","var(--red)","This gets worse every day y
 const STEP_DRILL={3:"S08_NOSHOW_ENGAGED",4:"S10_ATTENDED_NEVER_WORKED",5:"S14_BAD_PITCH_LIVE_LEAD",
  7:"S16_GOOD_PITCH_NO_NEXT_STEP",8:"S12_REMINDER_ONLY",9:"S11_ATTENDED_NOT_ANALYSED",10:"S13_WRONG_PROGRAM_PITCHED"};
 function pagePlan(){
-  let h=`<section><div class="eyebrow">Section 2 · The plan</div><h1 class="pg">Do this next</h1>
+  let h=`<section><h1 class="pg">Do this next</h1>
    <p class="lede">In order. Group A gets worse while you wait. ${leadLink({},"all leads")}</p>`;
+  const blkN={};
+  // STEP_DRILL maps a step number to a scenario code, not a predicate.
+  PLAN.forEach(p=>{const n=PLAN.indexOf(p)+1, code=STEP_DRILL[n];
+    if(code) blkN[p.blk]=(blkN[p.blk]||0)+UNIV.filter(r=>S(r.scenario)===code).length});
+  const bArr=["A","B","C","D"].filter(b=>blkN[b]).map(b=>({
+    k:BLOCK_META[b][0], v:blkN[b], color:BLOCK_META[b][1]}));
+  if(bArr.length>1) h+=barRank(bArr,{title:"Leads waiting in each group",
+    note:"Group A first. It is the only one where the problem grows while you wait.",labelW:220});
   ["A","B","C","D"].forEach(b=>{
     const [name,col,sub]=BLOCK_META[b];
     h+=`<div style="margin-top:26px;display:flex;align-items:baseline;gap:13px">
@@ -7093,8 +7142,7 @@ function pageScen(){
   const tot=UNIV.length;
   const rows=SCMETA.map(m=>({...m,n:UNIV.filter(r=>r.scenario===m.code).length}));
   const urgent=rows.filter(m=>/24h|48h/.test(m.sla)).reduce((a,m)=>a+m.n,0);
-  let h=`<section><div class="eyebrow">Section 3 · Where every lead stands</div>
-   <h1 class="pg">Lead states</h1>
+  let h=`<section><h1 class="pg">Lead states</h1>
    <p class="lede">One state per lead. Adds up to ${tot}. ${leadLink({},"all leads")}</p>
    <div class="kpis">
     ${kpi("M01",tot,"everyone who signed up for the webinar","a","drill('Metric M01','Registered base','"+esc(D("M01"))+"',UNIV,'univ')")}
@@ -7102,7 +7150,11 @@ function pageScen(){
     ${kpi("M21",UNIV.filter(r=>S(r.open_commitments)).length,`${pct(UNIV.filter(r=>S(r.open_commitments)).length,tot)} of ${tot}`,"w","drill('Metric M21','Open commitments','"+esc(D("M21"))+"',UNIV.filter(r=>S(r.open_commitments)),'univ')")}
     ${kpi("M22",UNIV.filter(r=>r.fde_fit==="STRETCH").length,`${pct(UNIV.filter(r=>r.fde_fit==="STRETCH").length,tot)} of ${tot}`,"r","drill('Metric M22','STRETCH fit profiles','"+esc(D("M22"))+"',UNIV.filter(r=>r.fde_fit==='STRETCH'),'univ')")}
    </div>
-   <div class="card" style="margin-top:18px;padding:0;overflow:hidden">
+   <h3 class="sec">Where everyone sits</h3>
+   ${treemap(rows.filter(r=>r.n>0).map(r=>({k:S(r.meaning).slice(0,26),v:r.n})),
+     {note:"Area is share of leads. One state per lead, so it adds to "+tot+"."})}
+   <h3 class="sec">Every state</h3>
+   <div class="card" style="margin-top:6px;padding:0;overflow:hidden">
    <div class="tw" style="border:none;box-shadow:none;max-height:none"><table><thead><tr>
    <th>#</th><th>State</th><th class="n">Leads</th><th class="n">Out of ${tot}</th><th>What it means</th>
    <th>Why they end up here</th><th>What to do</th><th>Who</th><th>By when</th></tr></thead><tbody>`;
@@ -7166,8 +7218,7 @@ function pageNonIQL(){
   const N=NONIQL, tot=N.length;
   const V=v=>N.filter(r=>r.verdict===v);
   const worth=V("WORTH A CALL NOW");
-  let h=`<section><div class="eyebrow">Section 10 · The people the filter throws away</div>
-   <h1 class="pg">Non-IQL leads</h1>
+  let h=`<section><h1 class="pg">Non-IQL leads</h1>
    <p class="lede">The lead filter removes anyone under 5 years of experience or in a non-coding role, so they never reach
    the FDE sales team. These ${tot} failed the filter and came to the webinar anyway. Some of them are real engineers who are
    simply one experience band short.</p>
@@ -7255,7 +7306,12 @@ function pageNonIQL(){
       ${kpi("M07",acq??"—",`across ${sub.length} real conversations`,acq<45?"r":acq<60?"w":"g","drill('Non-IQL calls','Worst calls first','Same call score as the IQL leads.',window._NQC.slice().sort((a,b)=>(a.cqs??999)-(b.cqs??999)))")}
       ${kpi("M08",rows.filter(r=>r.framing_flag==="COMPLIANT").length,`of ${sub.length} real conversations`,"g","drill('Non-IQL calls','FDE explained correctly','',window._NQC.filter(r=>r.framing_flag==='COMPLIANT'))")}
     </div>`;
-    h+=tbl([{h:"Lead ID",f:r=>`<span class="mono">${esc(r.hubspot_id)}</span>`},
+    const upMix={};
+  ES.forEach(r=>{const k=S(r.upsell_band)||S(r.temperature)||"—";upMix[k]=(upMix[k]||0)+1});
+  const upArr=Object.entries(upMix).map(([k,v])=>({k,v})).sort((a,b)=>b.v-a.v);
+  if(upArr.length>1) h+=`<h3 class="sec">How warm the upsell is</h3>`+donut(upArr,{unit:"students"});
+  h+=`<h3 class="sec">Every student</h3>`;
+  h+=tbl([{h:"Lead ID",f:r=>`<span class="mono">${esc(r.hubspot_id)}</span>`},
      {h:"Advisor",f:r=>esc(r.pa_name_final)},
      {h:"Type of call",f:r=>`<span class="pill">${S(r.call_type).replace(/_/g," ")}</span>`},
      {h:"Call score",n:1,f:r=>r.cqs==null?"—":`<b style="color:${cqsCol(r.cqs)}">${r.cqs}</b>`},
@@ -7321,8 +7377,25 @@ function paAgg(){
 function pagePA(){
   PAROWS=paAgg();
   const cc={URGENT:"hot",HIGH:"warm",MEDIUM:"cool",FINE:"good","No calls yet":""};
-  let h=`<section><div class="eyebrow">Section 4 · How the team is doing</div><h1 class="pg">Advisors</h1>
+  let h=`<section><h1 class="pg">Advisors</h1>
    <p class="lede">Click an advisor for their leads. Coaching need is score, not volume. ${leadLink({},"all leads")}</p>`+filterBar(["pod","temp","call"]);
+  // Volume against quality: a big book worked badly should be visible at a glance.
+  const sc=PAROWS.filter(p=>p.cqs!=null&&p.leads>=3).map(p=>({
+    x:p.leads, y:p.cqs, r:Math.sqrt(num(p.tt)*p.leads||1)/2.2, label:S(p.pa).split(" ")[0],
+    color:p.cqs<40?"#C0392B":p.cqs>55?"#1E8449":PAL[0]}));
+  if(sc.length>2){
+    h+=`<h3 class="sec">Volume against quality</h3>`+
+      scatter(sc,{xLabel:"Leads held",yLabel:"Average call score",
+        yBand:avg(PAROWS.map(p=>p.cqs).filter(v=>v!=null)),bandLabel:"team average",
+        note:"Bubble is time on the phone. Bottom-right is a big book worked badly."});
+  }
+  const need=PAROWS.filter(p=>p.cqs!=null).slice().sort((a,b)=>a.cqs-b.cqs).slice(0,10);
+  if(need.length>1){
+    h+=barRank(need.map(p=>({k:S(p.pa),v:p.cqs,sub:`${p.leads} leads`,
+      color:p.cqs<30?"#C0392B":p.cqs<45?"#B9770E":PAL[0]})),
+      {title:"Who needs coaching first",note:"Lowest score at the top. Under 45 is the line.",labelW:190});
+  }
+  h+=`<h3 class="sec">Everyone</h3>`;
   h+=tbl([
    {h:"#",f:r=>`<span class="mono mute">${String(PAROWS.indexOf(r)+1).padStart(2,"0")}</span>`},
    {h:"Advisor",f:r=>`<b>${esc(r.pa)}</b>`},{h:"Team",f:r=>`<span class="mute">${esc(r.pod)}</span>`},
@@ -7394,8 +7467,7 @@ function pageDisc(){
   window._MD={anyD,po:has("PRICE_OFF_LIST"),mp:has("MULTIPLE_PRICES_IN_ONE_CALL"),
               dw:has("DURATION_WRONG"),nm:has("PROGRAMME_NAME_MANGLED")};
 
-  let h=`<section><div class="eyebrow">Section 5 · What was actually said</div>
-   <h1 class="pg">Wrong info given</h1>
+  let h=`<section><h1 class="pg">Wrong info given</h1>
    <p class="lede">Every price, course length and course name an advisor actually said, checked against our own brochure.
    <b>Click any number and you get the exact sentence from the call</b>, not just a count. The brochure says <b>23 weeks</b>.
    We have assumed the FDE price is <b>₹2,75,000</b> because that is the figure said most often —
@@ -7517,8 +7589,7 @@ function pageVoice(){
       <div class="nm">${names[k]}</div>
       <div class="tr"><i style="width:${rows.length/mx*100}%;background:${colr}"></i></div>
       <div class="vn">${rows.length} · ${pct(rows.length,sub.length)}</div></div>`).join("")};
-  let h=`<section><div class="eyebrow">Section 6 · In their own words</div>
-   <h1 class="pg">What leads said</h1>
+  let h=`<section><h1 class="pg">What leads said</h1>
    <p class="lede">Out of ${sub.length} real conversations. ${leadLink({},"all leads")}</p>`
    +filterBar(["pa","pod","temp"]);
   h+=`<div class="grid" style="grid-template-columns:1fr 1fr">
@@ -7551,8 +7622,21 @@ function pageVoice(){
 let QROWS=[];
 function pageQueue(){
   QROWS=VIEW.slice().sort((a,b)=>b.lead_priority_score-a.lead_priority_score);
-  let h=`<section><div class="eyebrow">Section 7 · Tomorrow morning</div><h1 class="pg">Call list</h1>
+  let h=`<section><h1 class="pg">Call list</h1>
    <p class="lede">Best at the top. Filter "What to do" to <b>RE_PITCH_FDE</b> for warm leads who got a weak call. ${leadLink({},"all leads")}</p>`+filterBar(["pa","pod","temp","act","q"]);
+  const tMix={},aMix={};
+  QROWS.forEach(r=>{const t=S(r.temperature)||"—";tMix[t]=(tMix[t]||0)+1;
+    const a=S(r.action_bucket).replace(/_/g," ")||"—";aMix[a]=(aMix[a]||0)+1});
+  const tOrd=["HOT","WARM","COOL","COLD","DEAD"].filter(k=>tMix[k]);
+  if(tOrd.length){
+    h+=`<div class="grid" style="grid-template-columns:1fr 1fr">
+      <div>${barRank(tOrd.map(k=>({k,v:tMix[k],
+        color:k==="HOT"?"#C0392B":k==="WARM"?"#B9770E":k==="COOL"?PAL[0]:"#6C7A89"})),
+        {title:"How warm they are",labelW:110})}</div>
+      <div>${barRank(Object.entries(aMix).map(([k,v])=>({k,v})).sort((a,b)=>b.v-a.v),
+        {title:"What to do with them",labelW:190})}</div></div>`;
+  }
+  h+=`<h3 class="sec">The list</h3>`;
   h+=tbl([{h:"#",n:1,f:r=>`<span class="mono mute">${QROWS.indexOf(r)+1}</span>`},
    {h:"HubSpot ID",f:r=>`<span class="mono">${esc(r.hubspot_id)}</span>`},
    {h:"Advisor",f:r=>esc(r.pa_name_final)},{h:"POD",f:r=>`<span class="mute">${esc(r.pod_final)}</span>`},
@@ -7599,7 +7683,7 @@ function pageNoShow(){
   const hw=ns.filter(r=>["HOT","WARM"].includes(S(r.reengagement_band)));
   window._NS={ns,eng,aband,never,hw,nsAll,dcdRows:ns.filter(r=>num(r.DCD_Flag)===1),
               unan:all.filter(r=>r.cohort==="ATTENDED_UNANALYSED")};
-  let h=`<section><div class="eyebrow">Section 8 · Signed up, never came</div><h1 class="pg">No shows</h1>
+  let h=`<section><h1 class="pg">No shows</h1>
    <p class="lede">Not turning up is not the same as not interested. ${leadLink({cohort:"NO_SHOW"},"open the no-shows")}</p>
    <div class="callout"><h4>Nobody has called ${aband.length} of these ${ns.length} people since the webinar.</h4>
    <p><b>${eng.length}</b> of them spoke to an advisor for five minutes or more before the webinar and still did not come.
@@ -7625,7 +7709,12 @@ function pageNoShow(){
   h+=`<div class="grid" style="grid-template-columns:1fr 1fr;margin-top:18px">
    <div class="card"><h3>8.1 · Signed up vs came vs calls read</h3>
    <div class="sub">How much effort each group has actually had. The gap in the bottom row is your opportunity.</div>
-   <div class="tw" style="max-height:none;border:none;box-shadow:none"><table><thead><tr>
+   ${(()=>{const d=[["Wrong price",window._MD.po.length],["Two or more prices",window._MD.mp.length],
+  ["Wrong course length",window._MD.dw.length],["Wrong course name",window._MD.nm.length]]
+  .filter(x=>x[1]>0).map(([k,v])=>({k,v,color:"#C0392B"}));
+  return d.length?barRank(d,{title:"What is being said wrong",
+    note:"Counted per lead. One call with two problems shows in both.",labelW:190}):""})()}
+<div class="tw" style="max-height:none;border:none;box-shadow:none"><table><thead><tr>
    <th>Group</th><th class="n">Leads</th><th class="n">Ever called</th><th class="n">Ever picked up</th>
    <th class="n">Avg calls made</th><th class="n">Avg minutes</th><th class="n">Had a first call</th></tr></thead><tbody>`;
   [["ATTENDED_ANALYSED","Came · calls read"],["ATTENDED_UNANALYSED","Came · calls not read"],
@@ -7699,6 +7788,14 @@ function pageNoShow(){
      oninput="NF.q=this.value;clearTimeout(window._nt);window._nt=setTimeout(render,260)" style="min-width:190px">
    <button onclick="Object.keys(NF).forEach(k=>NF[k]='');render()">Reset</button>
    <span class="mute mono" style="font-size:11px">${ns.length} of ${nsAll.length} no-shows</span></div>`;
+  const nsMix={};
+  NSVIEW.forEach(r=>{const k=S(r.noshow_type).replace(/_/g," ")||"(not set)";nsMix[k]=(nsMix[k]||0)+1});
+  const nsArr=Object.entries(nsMix).map(([k,v])=>({k,v})).sort((a,b)=>b.v-a.v);
+  if(nsArr.length>1){
+    h+=`<h3 class="sec">Why they did not come</h3>`+
+      donut(nsArr,{unit:"no-shows",note:"Each diagnosis needs a different follow-up."});
+  }
+  h+=`<h3 class="sec">The list</h3>`;
   h+=tbl([{h:"#",n:1,f:r=>`<span class="mono mute">${NSROWS.indexOf(r)+1}</span>`},
    {h:"HubSpot ID",f:r=>`<span class="mono">${esc(r.hubspot_id)}</span>`},
    {h:"Advisor",f:r=>esc(r.pa_name_final)},{h:"POD",f:r=>`<span class="mute">${esc(r.pod_final)}</span>`},
@@ -7726,8 +7823,7 @@ function pageUpsell(){
   const fde=UNIV.filter(r=>num(r.enrolled_in_fde)===1);
   window._ES=ES;
   const nxt={}; ROWS.forEach(r=>nxt[String(r.hubspot_id)]=r.recommended_next_action);
-  let h=`<section><div class="eyebrow">Section 11 · Warmest people in the file</div>
-   <h1 class="pg">Existing students</h1>
+  let h=`<section><h1 class="pg">Existing students</h1>
    <p class="lede">These already paid IK for something once, and then signed up for the FDE webinar anyway. That is
    interest, not a closed deal. They are the cheapest people to sell to because the hardest objection — do I trust this
    company — is already answered.</p>
@@ -7816,7 +7912,7 @@ function openES(i){
 
 /* ============ 11 TREND ============ */
 function pageTrend(){
-  let h=`<section><div class="eyebrow">Section 11 · Is it getting better?</div><h1 class="pg">Track progress</h1>
+  let h=`<section><h1 class="pg">Track progress</h1>
    <p class="lede">Every time you load data it gets saved. This is how you prove the coaching worked, or that it did not.</p>`;
   if(SNAPS.length<1)return h+`<div class="card"><h3>No snapshots yet</h3>
     <div class="sub" style="margin:0">Load a call file. From the second time onward this page shows whether the call score,
@@ -7878,7 +7974,7 @@ async function signOut(){
 }
 
 function pageUpload(){
-  return `<section><div class="eyebrow">Section 12 · Every day</div><h1 class="pg">Upload data</h1>
+  return `<section><h1 class="pg">Upload data</h1>
    <p class="lede">Nothing is applied until you press Save. Drop a file, look at what it would change, then commit
    or discard. Leave without saving and the last saved version is what comes back.</p>
    ${stagePanel()}

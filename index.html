@@ -542,12 +542,49 @@ body.dense p.lede{font-size:13px;margin-bottom:12px}
 .pfrisk.big{font-size:12px;padding:3px 12px}
 .pfobj{margin-top:9px;display:flex;flex-wrap:wrap;gap:5px}
 .pfchip{font-size:10.5px;background:var(--s50);border-radius:9px;padding:2px 8px;color:var(--mute)}
+.modebar{display:flex;gap:4px;flex-wrap:wrap;margin:0 0 20px;border-bottom:1px solid var(--s200);padding-bottom:0}
+.modebar button{background:none;border:none;border-bottom:2px solid transparent;border-radius:0;
+  padding:9px 14px;font-size:13.5px;font-weight:600;color:var(--mute);cursor:pointer;margin-bottom:-1px}
+.modebar button:hover{color:var(--navy)}
+.modebar button.on{color:var(--navy);border-bottom-color:var(--cy);font-weight:700}
+.modebar.sub{border-bottom:none;margin-bottom:14px}
+.modebar.sub button{border:1px solid var(--s200);border-radius:16px;padding:5px 13px;font-size:12.5px;margin:0}
+.modebar.sub button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.navgap{height:14px;border-top:1px solid rgba(255,255,255,.1);margin:12px 12px 8px}
+.side a.sub{font-size:12.5px;opacity:.8}
+.scorecard{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--s200);
+  border:1px solid var(--s200);border-radius:var(--r);overflow:hidden}
+.scstep{background:#fff;padding:15px 16px;cursor:pointer;transition:background .14s ease}
+.scstep:hover{background:var(--cy-l)}
+.sck{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.scv{font-size:30px;font-weight:700;letter-spacing:-.03em;color:var(--navy);
+  font-variant-numeric:tabular-nums;line-height:1.15;margin-top:3px}
+.scd{font-size:12px;margin-top:2px;min-height:17px}
+.dl{font-weight:700}.dl.up{color:var(--grn)}.dl.dn{color:var(--red)}
+.scr{font-size:11.5px;color:var(--mute);margin-top:4px}
+.actcard{border:1px solid var(--s200);border-left:3px solid var(--cy);border-radius:var(--r);
+  background:#fff;padding:16px 18px;margin-bottom:11px;box-shadow:var(--shadow)}
+.acthead{font-size:15.5px;font-weight:700;letter-spacing:-.01em;display:flex;gap:10px;align-items:baseline}
+.actn{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;
+  background:var(--navy);color:#fff;font-size:12px;flex-shrink:0}
+.actwhy{font-size:13.5px;color:var(--body);line-height:1.65;margin-top:7px}
+.actgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:12px;
+  padding-top:12px;border-top:1px solid var(--s100)}
+.actgrid .k{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
+.actgrid .v{font-size:13px;margin-top:2px;line-height:1.4}
+.actdone{font-size:12.5px;color:var(--mute);margin-top:11px;padding-top:10px;border-top:1px solid var(--s100)}
+@media(max-width:900px){.scorecard{grid-template-columns:repeat(2,1fr)}}
 .fresh{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;
   padding:3px 11px;border-radius:13px;border:1.5px solid;letter-spacing:.01em}
 .fresh:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
 .fresh.live{color:#1E8449;border-color:#A9DFBF;background:#F0F9F4}
 .fresh.snap{color:#B9770E;border-color:#F5D5A0;background:#FDF6EA;cursor:pointer}
 .fresh.ready{color:var(--cy-d);border-color:var(--cy);background:var(--cy-l);cursor:pointer}
+.scr.tgt{margin-top:3px;font-size:11px;font-weight:600;cursor:pointer}
+.scr.tgt.ok{color:#1E8449}
+.scr.tgt.miss{color:#C0392B}
+.tgtnone{color:var(--faint);font-weight:500;border-bottom:1px dashed var(--s300)}
+.tgtnone:hover{color:var(--cy)}
 .trail{margin:4px 0 16px}
 .trev{display:grid;grid-template-columns:26px 96px 1fr;gap:11px;padding:11px 0;
   border-bottom:1px solid var(--s100);align-items:start}
@@ -589,7 +626,7 @@ body.dense p.lede{font-size:13px;margin-bottom:12px}
       <span class="mechip" id="meChip" style="display:none"></span>
       <button class="gh" onclick="exportCSV()">Download</button>
     </div>
-    <div class="wrap"><div id="page"></div></div>
+    <div class="wrap"><div id="modeBar"></div><div id="page"></div></div>
   </main>
 </div>
 
@@ -7871,61 +7908,70 @@ function pageProfiles(){
 }
 
 /* ============ NAV ============ */
-/* Information architecture per the Category Intelligence Center spec:
-   four always-visible primaries, everything else in collapsible workspaces.
-   Old sections are mapped, not deleted — every page keeps its route. */
-const TABS=[
- ["", [               // primaries render without a group header
-   ["today","Today"],
-   ["webinars","Webinars"],
-   ["lead","Summary"],
-   ["explore","Explore"]]],
+/* ============ FOUR-SECTION SHELL ============
+   Command, Demand, Webinar, Revenue — everything else becomes a mode inside
+   one of them, or moves to Settings. No page is deleted; every old route still
+   resolves, so saved links keep working. */
 
- ["INTELLIGENCE",[
-   ["knowledge","Market & role"],
-   ["jobs","Jobs & talent"],
-   ["org","FDE org chart"],
-   ["voice","Voice of customer"],
-   ["campaigns","Demand by source"],
-   ["t500","Talent 500"]]],
-
- ["SALES OPS",[
-   ["queue","Call list"],
-   ["plan","Do this next"],
-   ["pa","Advisors"],
-   ["coach","PA coach"],
-   ["calling","Calling effort"],
-   ["discipline","Wrong info given"],
-   ["scen","Lead states"],
-   ["noshow","No shows"],
-   ["upsell","Existing students"],
-   ["noniql","Non-IQL leads"],
-   ["notfit","Not a fit"],
-   ["master","All leads"],
-   ["analyse","Call analysis"],["aug6","6 Aug analysis"],["vtt","Transcripts"],
-   ["rec","Recordings"],
-   ["webinar","Webinar view"]]],
-
- ["GROWTH",[
-   ["conversion","Conversion"],["callinput","Call input metrics"],
-   ["forecast","Forecast & cohorts"],
-   ["insights","Insights"],
-   ["trend","Track progress"]]],
-
- ["VAULT",[
-   ["sources","Sources & integrations"],
-   ["resources","Resources"],
-   ["cover","Coverage"],
-   ["upload","Upload data"],
-   ["audit","What changed"]]],
+const SECTIONS = [
+  {k:"command", label:"Command", modes:[["command","Overview"]]},
+  {k:"demand",  label:"Demand",  modes:[
+     ["campaigns","Acquisition"],["t500","Partners"],["jobs","Market demand"],
+     ["org","Role map"],["knowledge","Category knowledge"]]},
+  {k:"webinar", label:"Webinar", modes:[
+     ["webinars","All webinars"],["webinar","Audience"],["vtt","Experience"],
+     ["aug6","Call outcomes"],["callinput","Call input metrics"],["noshow","No shows"]]},
+  {k:"revenue", label:"Revenue", modes:[
+     ["master","Lead 360"],["queue","Call list"],["pa","Calls & reps"],
+     ["coach","Rep coaching"],["conversion","Sales & attribution"],
+     ["forecast","Forecast"],["calling","Calling effort"],["discipline","Call quality"]]},
 ];
-/* Collapsed state per workspace, remembered across sessions. */
-let GRPO = {};
-try{ GRPO = JSON.parse(localStorage.getItem("cbi:grpo")||"{}") }catch(e){}
-function grpToggle(g){
-  GRPO[g] = !GRPO[g];
-  try{ localStorage.setItem("cbi:grpo", JSON.stringify(GRPO)) }catch(e){}
-  renderNav();
+const SETTINGS_MODES = [
+  ["sources","Integrations"],["cover","Data health"],["audit","What changed"],
+  ["upload","Data in"],["resources","Resources"],["glossary","Metric contract"]];
+
+/* Which section owns a given page. Anything unlisted stays reachable but sits
+   under More, rather than being orphaned. */
+const MORE_MODES = [
+  ["insights","Insights"],["plan","Do this next"],["explore","Explore"],
+  ["scen","Lead states"],["upsell","Existing students"],["notfit","Not a fit"],
+  ["noniql","Non-IQL"],["voice","What leads said"],["analyse","Call analysis"],
+  ["rec","Recordings"],["trend","Track progress"],["lead","Legacy summary"]];
+
+let SEC = "command";
+function secOf(tab){
+  for(const s of SECTIONS) if(s.modes.some(m => m[0] === tab)) return s.k;
+  if(SETTINGS_MODES.some(m => m[0] === tab)) return "settings";
+  return "more";
+}
+function goSec(k){
+  SEC = k;
+  const s = SECTIONS.find(x => x.k === k);
+  if(s) go(s.modes[0][0]);
+  else if(k === "settings") go(SETTINGS_MODES[0][0]);
+  else go(MORE_MODES[0][0]);
+}
+/* The mode strip under the section name. */
+function renderNav(){
+  const c = TABCOUNT();
+  const sec = secOf(TAB);
+  let h = SECTIONS.map(s =>
+    `<a class="pri ${sec===s.k?"on":""}" onclick="goSec('${s.k}')">${s.label}
+      ${c[s.modes[0][0]]!==undefined?`<span class="ct">${c[s.modes[0][0]]}</span>`:""}</a>`).join("");
+  h += `<div class="navgap"></div>
+    <a class="sub ${sec==="more"?"on":""}" onclick="goSec('more')">More views</a>
+    <a class="sub ${sec==="settings"?"on":""}" onclick="goSec('settings')">Settings</a>`;
+  $("nav").innerHTML = h;
+  $("foot").innerHTML = `${ROWS.length} calls read · ${UNIV.length} leads`;
+}
+function modeBar(){
+  const sec = secOf(TAB);
+  const modes = sec === "settings" ? SETTINGS_MODES
+              : sec === "more" ? MORE_MODES
+              : (SECTIONS.find(s => s.k === sec) || {modes:[]}).modes;
+  if(modes.length < 2) return "";
+  return `<div class="modebar">${modes.map(([k,l]) =>
+    `<button class="${TAB===k?"on":""}" onclick="go('${k}')">${esc(l)}</button>`).join("")}</div>`;
 }
 const TABCOUNT=()=>({
  today:(typeof alerts==="function"?alerts(UNIV).filter(a=>a.breach).length:0)||undefined,
@@ -7941,29 +7987,7 @@ const TABCOUNT=()=>({
 
  upsell:UNIV.filter(r=>num(r.existing_student)===1&&num(r.enrolled_in_fde)===0).length});
 function go(t){TAB=t;render()}
-function renderNav(){
-  const c=TABCOUNT();let h="";
-  TABS.forEach(([grp,items])=>{
-    if(!grp){
-      // The four primaries: no header, always visible, larger hit area.
-      items.forEach(([k,l])=>{
-        h+=`<a class="pri ${TAB===k?'on':''}" onclick="go('${k}')">${l}
-          ${c[k]!==undefined?`<span class="ct">${c[k]}</span>`:""}</a>`});
-      return;
-    }
-    const open = !GRPO[grp];
-    const activeInside = items.some(([k])=>k===TAB);
-    h+=`<div class="grp click" onclick="grpToggle('${grp}')">
-      <span>${grp}</span><i class="tw${open||activeInside?" open":""}">▸</i></div>`;
-    if(open || activeInside){
-      items.forEach(([k,l])=>{
-        h+=`<a class="${TAB===k?'on':''}" onclick="go('${k}')">${l}
-          ${c[k]!==undefined?`<span class="ct">${c[k]}</span>`:""}</a>`});
-    }
-  });
-  $("nav").innerHTML=h;
-  $("foot").innerHTML=`${ROWS.length} analysed · ${UNIV.length} registered`;
-}
+
 function filterBar(keys){
   const opt=(k,arr,ph)=>`<label class="f">${ph}</label><select onchange="F.${k}=this.value;render()">
     <option value="">All</option>${arr.map(v=>`<option ${F[k]===v?'selected':''}>${esc(v)}</option>`).join("")}</select>`;
@@ -8532,7 +8556,12 @@ function pageDisc(){
   const names={};U2.forEach(r=>S(r.names_mangled).split(";").filter(Boolean).forEach(nm=>names[nm]=(names[nm]||0)+1));
   window._MD={anyD,po:has("PRICE_OFF_LIST"),mp:has("MULTIPLE_PRICES_IN_ONE_CALL"),
               dw:has("DURATION_WRONG"),nm:has("PROGRAMME_NAME_MANGLED")};
+  const _dmix=[["Wrong price",window._MD.po.length],["Two or more prices",window._MD.mp.length],
+    ["Wrong course length",window._MD.dw.length],["Wrong course name",window._MD.nm.length]]
+    .filter(x=>x[1]>0).map(([k,v])=>({k,v,color:"#C0392B"}));
 
+  const _dchart=_dmix.length?barRank(_dmix,{title:"What is being said wrong",
+    note:"Counted per lead. One call with two problems shows in both.",labelW:190}):"";
   let h=`<section><h1 class="pg">Wrong info given</h1>
    <p class="lede">Every price, course length and course name an advisor actually said, checked against our own brochure.
    <b>Click any number and you get the exact sentence from the call</b>, not just a count. The brochure says <b>23 weeks</b>.
@@ -8543,6 +8572,7 @@ function pageDisc(){
    <p>If someone hears one price from one advisor and a different price from another, they stop trusting both.
    ${window._MD.mp.length} leads heard two or more prices inside one call — that is discounting being made up on the spot,
    and it teaches people to haggle before the course has even built a reputation.</p></div>
+   ${_dchart}
    <div class="kpis">
     ${kpi("M19",anyD.length,`${pct(anyD.length,tot)} of ${tot} who signed up`,"r","defectAll(window._MD.anyD)")}
     ${kpi("M20",pk.length,pk.length?`${inr(Math.min(...pk))} to ${inr(Math.max(...pk))}`:"","r","defectPopup('price',window._MD.po)")}
@@ -8775,12 +8805,7 @@ function pageNoShow(){
   h+=`<div class="grid" style="grid-template-columns:1fr 1fr;margin-top:18px">
    <div class="card"><h3>8.1 · Signed up vs came vs calls read</h3>
    <div class="sub">How much effort each group has actually had. The gap in the bottom row is your opportunity.</div>
-   ${(()=>{const d=[["Wrong price",window._MD.po.length],["Two or more prices",window._MD.mp.length],
-  ["Wrong course length",window._MD.dw.length],["Wrong course name",window._MD.nm.length]]
-  .filter(x=>x[1]>0).map(([k,v])=>({k,v,color:"#C0392B"}));
-  return d.length?barRank(d,{title:"What is being said wrong",
-    note:"Counted per lead. One call with two problems shows in both.",labelW:190}):""})()}
-<div class="tw" style="max-height:none;border:none;box-shadow:none"><table><thead><tr>
+   <div class="tw" style="max-height:none;border:none;box-shadow:none"><table><thead><tr>
    <th>Group</th><th class="n">Leads</th><th class="n">Ever called</th><th class="n">Ever picked up</th>
    <th class="n">Avg calls made</th><th class="n">Avg minutes</th><th class="n">Had a first call</th></tr></thead><tbody>`;
   [["ATTENDED_ANALYSED","Came · calls read"],["ATTENDED_UNANALYSED","Came · calls not read"],
@@ -9153,6 +9178,348 @@ async function freshCheck(){
   }catch(e){}
 }
 
+/* ============ COMMAND ============
+   The leadership answer in under a minute: are we on target, what changed,
+   why, what to do, who owns it. Everything here drills to the records behind
+   it, and every number states whether it is observed or assumed. */
+
+let CMD_CHAIN = "all";
+const CHAINS = {
+  all:      ["Everything", () => true],
+  t500:     ["Talent 500", r => /talent/i.test(S(r.channel)) || /talent/i.test(S(r.UTM_Campaign))],
+  paid:     ["Paid",       r => /google|meta|facebook|linkedin|paid/i.test(S(r.channel))],
+  organic:  ["Organic & base", r => /organic|referral|direct|database|email/i.test(S(r.channel))],
+};
+function cmdChain(k){ CMD_CHAIN = k; render() }
+
+/* Owner suggestions come from who actually holds the leads, not a guess. */
+function cmdOwner(rows){
+  const c = {};
+  rows.forEach(r => { const p = S(r.pa_name_final); if(p) c[p] = (c[p]||0)+1 });
+  const top = Object.entries(c).sort((a,b) => b[1]-a[1])[0];
+  return top ? top[0] : "unassigned";
+}
+function cmdDue(days){
+  const d = new Date(Date.now() + days*864e5);
+  return d.toLocaleDateString([], {day:"numeric", month:"short"});
+}
+
+/* Webinar-over-webinar comparison, which is the only comparison this data
+   currently supports honestly. */
+function cmdCohorts(pred){
+  const by = {};
+  ALLUNIV.filter(fitOK).filter(pred).forEach(r => {
+    const d = S(r.webinar_start_date).slice(0,10) || "(no date)";
+    (by[d] = by[d] || []).push(r);
+  });
+  return Object.keys(by).sort().map(d => ({date:d, rows:by[d]}));
+}
+function cmdStep(rows){
+  const att = rows.filter(r => num(r.attended_live)===1 || S(r.attended_on));
+  const dcd = rows.filter(r => num(r.DCD_Flag)>0);
+  const rte = rows.filter(r => num(r.RTE_Flag)>0);
+  const won = rows.filter(cvBought);
+  return {leads:rows, att, dcd, rte, won};
+}
+
+/* ============ METRIC CONTRACT ============
+   Every definition in one place, versioned, with its source and whether it is
+   observed, derived or assumed. If a number is disputed, this settles it. */
+const METRICS = [
+ {n:"Registered", d:"One row per lead per webinar.", f:"COUNT(lead_email) per webinar_start_date",
+  g:"lead-webinar", src:"Live DB / BigQuery", kind:"observed"},
+ {n:"Unique people", d:"One canonical person across all selected webinars.",
+  f:"COUNT(DISTINCT lead_email)", g:"person", src:"Live DB / BigQuery", kind:"derived"},
+ {n:"Attended", d:"Registered and joined at least once. Counted once per person-webinar.",
+  f:"attended_on IS NOT NULL OR attended_live = 1", g:"lead-webinar", src:"Live DB", kind:"observed"},
+ {n:"Show rate", d:"Unique attendees over unique registrations in the same cohort.",
+  f:"attended / registered", g:"cohort", src:"derived", kind:"derived"},
+ {n:"Meaningful call", d:"Talk time strictly over 120 seconds.", f:"total_tt * 60 > 120",
+  g:"call", src:"call analysis", kind:"observed"},
+ {n:"Pre / post webinar call", d:"Split at the webinar start time.",
+  f:"call timestamp < webinar_start_date", g:"call", src:"Live DB", kind:"observed"},
+ {n:"Discovery done (DCD)", d:"CRM flag that a discovery call took place.", f:"DCD_Flag > 0",
+  g:"lead", src:"CRM", kind:"observed"},
+ {n:"Ready to enrol (RTE)", d:"CRM flag that the lead is ready to buy.", f:"RTE_Flag > 0",
+  g:"lead", src:"CRM", kind:"observed"},
+ {n:"New sale", d:"Sale dated on or after the campaign start.", f:"sale_date >= 2026-07-27",
+  g:"sale", src:"CRM", kind:"derived",
+  note:"Configurable. Enrolments with no sale date are excluded everywhere and shown separately."},
+ {n:"Median deal", d:"Middle deal value across IK's own sales history.", f:"MEDIAN(deal_amount_inr)",
+  g:"sale", src:"1,595 sales, May 2025 – Apr 2026", kind:"observed", note:"₹1,90,000. Range ₹1.5L–₹2.2L."},
+ {n:"Call quality score", d:"0-100 composite over five components on substantive calls.",
+  f:"mean(discovery, pitch accuracy, urgency, next step, objections)", g:"call",
+  src:"call analysis", kind:"derived", note:"Computed identically in Python and JS; 18 checks reconcile them."},
+ {n:"Expected sales (forecast)", d:"Open pipeline priced at assumed close rates.",
+  f:"RTE×35% + DCD-only×12% + attended-only×4%, × median deal", g:"cohort",
+  src:"assumption", kind:"assumed",
+  note:"The three rates are assumptions, not measurements. Replace at roughly 30 FDE sales."},
+ {n:"Not-a-fit roles", d:"Roles excluded from operating views by default.",
+  f:"role_domain IN (Data Analyst/BA, Tech PM, Product Manager (Tech))", g:"lead",
+  src:"business rule", kind:"assumed", note:"49 leads. Toggleable, never deleted."},
+ {n:"Cost per registration, CAC, ROAS", d:"Not available.", f:"needs channel spend",
+  g:"—", src:"not connected", kind:"missing"},
+ {n:"Email influence", d:"Not available.", f:"needs ALM send/click events",
+  g:"—", src:"not connected", kind:"missing"},
+];
+function pageGlossary(){
+  const badge = k => ({observed:'<span class="pill good">observed</span>',
+    derived:'<span class="pill">derived</span>', assumed:'<span class="pill warm">assumed</span>',
+    missing:'<span class="pill hot">not connected</span>'})[k]||k;
+  return `<section><h1 class="pg">Metric contract</h1>
+   <p class="lede">Every definition, its formula, its grain and whether it is observed, derived or assumed.
+   If two people disagree about a number, this is what settles it.</p>
+   <div class="tw"><table><thead><tr><th>Metric</th><th>What it means</th><th>Formula</th>
+     <th>Grain</th><th>Source</th><th>Kind</th></tr></thead><tbody>
+     ${METRICS.map(m => `<tr><td><b>${esc(m.n)}</b></td>
+       <td>${esc(m.d)}${m.note?`<div class="mute" style="font-size:11.5px;margin-top:3px">${esc(m.note)}</div>`:""}</td>
+       <td><span class="mono" style="font-size:11.5px">${esc(m.f)}</span></td>
+       <td class="mute">${esc(m.g)}</td><td class="mute">${esc(m.src)}</td>
+       <td>${badge(m.kind)}</td></tr>`).join("")}
+   </tbody></table></div>
+   <div class="callout" style="margin-top:16px"><h4>Rules that hold everywhere</h4>
+     <p>Grains are never mixed silently — a lead-webinar row is not a person. Enrolments without a
+     sale date are excluded from revenue rather than guessed at. Assumed numbers say so on the face
+     of the page, not in a footnote.</p></div></section>`;
+}
+
+
+/* ---------- targets ---------- */
+/* Targets are a business input, not something to infer. Blank until set, and
+   the variance column stays empty rather than inventing a benchmark. */
+let TGT = {};
+try{ TGT = JSON.parse(localStorage.getItem("cbi:targets")||"{}") }catch(e){}
+function tgtSet(step, v){
+  const n = parseFloat(String(v).replace(/[^\d.]/g,""));
+  if(isFinite(n) && n > 0) TGT[step] = n; else delete TGT[step];
+  try{ localStorage.setItem("cbi:targets", JSON.stringify(TGT)) }catch(e){}
+  render();
+}
+function tgtVar(step, actual){
+  const t = TGT[step];
+  if(!t) return `<div class="scr tgt"><span class="tgtnone" onclick="event.stopPropagation();tgtAsk('${esc(step)}')">set target</span></div>`;
+  const d = actual - t, p = t ? (d/t*100) : 0;
+  return `<div class="scr tgt ${d>=0?"ok":"miss"}" onclick="event.stopPropagation();tgtAsk('${esc(step)}')">
+    ${d>=0?"+":""}${Math.round(d)} vs ${Math.round(t)} target · ${p>0?"+":""}${p.toFixed(0)}%</div>`;
+}
+function tgtAsk(step){
+  const cur = TGT[step] || "";
+  const v = prompt(`Target for ${step} this webinar?\n\nLeave empty to clear it. Targets are yours - nothing is inferred.`, cur);
+  if(v !== null) tgtSet(step, v);
+}
+
+function pageCommand(){
+  if(!UNIV.length) return noDB("Command");
+  const [chainLabel, pred] = CHAINS[CMD_CHAIN];
+  const cohorts = cmdCohorts(pred);
+  const cur = cohorts[cohorts.length-1] || {date:"—", rows:[]};
+  const prev = cohorts[cohorts.length-2] || null;
+  const S1 = cmdStep(cur.rows), S0 = prev ? cmdStep(prev.rows) : null;
+  const deal = (typeof MODEL!=="undefined" && MODEL.econ) ? MODEL.econ.median : 190000;
+  const rup2 = v => "₹" + Math.round(v).toLocaleString("en-IN");
+  window._CMD = S1;
+
+  const delta = (a,b) => {
+    if(b === null || b === undefined) return "";
+    const d = a - b;
+    if(!b) return d ? `<span class="dl up">new</span>` : "";
+    const p = (d/b*100);
+    return `<span class="dl ${d>0?"up":d<0?"dn":""}">${d>0?"+":""}${d} · ${p>0?"+":""}${p.toFixed(0)}%</span>`;
+  };
+  const rate = (a,b) => b ? (a/b*100).toFixed(1)+"%" : "—";
+
+  let h = `<section><h1 class="pg">Command</h1>
+   <p class="lede">Latest webinar <b>${esc(cur.date)}</b>${prev?` against <b>${esc(prev.date)}</b>`:""} ·
+   ${esc(chainLabel)} · ${S1.leads.length} leads. Every number opens the records behind it.</p>
+   <div class="modebar sub">${Object.entries(CHAINS).map(([k,v]) =>
+     `<button class="${CMD_CHAIN===k?"on":""}" onclick="cmdChain('${k}')">${v[0]}</button>`).join("")}</div>`;
+
+  /* ---- A. funnel scorecard ---- */
+  const steps = [
+    ["Registered", S1.leads, S0&&S0.leads, null],
+    ["Attended",   S1.att,   S0&&S0.att,   S1.leads],
+    ["Discovery",  S1.dcd,   S0&&S0.dcd,   S1.att],
+    ["Ready",      S1.rte,   S0&&S0.rte,   S1.dcd],
+    ["Enrolled",   S1.won,   S0&&S0.won,   S1.rte],
+  ];
+  h += `<h3 class="sec">Registrations to revenue</h3>
+   <div class="scorecard">
+     ${steps.map(([k, now, was, from]) => `
+       <div class="scstep click" onclick="drill('Command','${esc(k)}','Leads at this step.',window._CMD.${
+         k==="Registered"?"leads":k==="Attended"?"att":k==="Discovery"?"dcd":k==="Ready"?"rte":"won"},'univ')">
+         <div class="sck">${esc(k)}</div>
+         <div class="scv">${now.length}</div>
+         <div class="scd">${delta(now.length, was?was.length:null)}</div>
+         ${from?`<div class="scr">${rate(now.length, from.length)} of ${from===S1.leads?"registered":"previous step"}</div>`:
+                `<div class="scr">&nbsp;</div>`}
+         ${tgtVar(k, now.length)}
+       </div>`).join("")}
+   </div>
+   <div class="mute" style="font-size:12px;margin-top:7px">
+     Revenue at the historical median deal of ${rup2(deal)}: <b>${rup2(S1.won.length*deal)}</b> booked,
+     <b>${rup2(S1.rte.filter(r=>!cvBought(r)).length*deal)}</b> still open in ready-to-enrol.
+     No spend data is connected, so cost per registration, CAC and ROAS cannot be shown.
+   </div>`;
+
+  /* ---- B. what changed and why ---- */
+  h += `<h3 class="sec">What changed, and why</h3>`;
+  if(!prev){
+    h += `<div class="card"><div class="sub" style="margin:0">Only one webinar in this cut — nothing to compare against yet.</div></div>`;
+  } else {
+    const drivers = [];
+    const pushDriver = (title, body, tone, rows) => drivers.push({title, body, tone, rows});
+
+    /* attendance */
+    const r1 = S1.leads.length ? S1.att.length/S1.leads.length : 0;
+    const r0 = S0.leads.length ? S0.att.length/S0.leads.length : 0;
+    if(Math.abs(r1-r0) > 0.03){
+      const dir = r1 > r0 ? "rose" : "fell";
+      pushDriver(`Show rate ${dir} to ${(r1*100).toFixed(0)}% from ${(r0*100).toFixed(0)}%`,
+        `On ${S1.leads.length} registrations that is ${Math.abs(Math.round((r1-r0)*S1.leads.length))} ${
+          r1>r0?"more":"fewer"} people in the room. Attendance is the strongest single predictor of a sale in this data.`,
+        r1 > r0 ? "good" : "hot", S1.att);
+    }
+    /* audience mix */
+    const mix = (rows, f) => {
+      const c = {}; rows.forEach(r => { const v = S(r[f])||"(not set)"; c[v]=(c[v]||0)+1 });
+      return c;
+    };
+    const m1 = mix(S1.leads,"channel"), m0 = mix(S0.leads,"channel");
+    const shifts = Object.keys({...m1,...m0}).map(k => ({
+      k, now:(m1[k]||0)/Math.max(S1.leads.length,1), was:(m0[k]||0)/Math.max(S0.leads.length,1)
+    })).map(x => ({...x, d:x.now-x.was})).sort((a,b) => Math.abs(b.d)-Math.abs(a.d));
+    if(shifts.length && Math.abs(shifts[0].d) > 0.06){
+      const t = shifts[0];
+      pushDriver(`Audience mix shifted: ${esc(t.k)} moved to ${(t.now*100).toFixed(0)}% from ${(t.was*100).toFixed(0)}%`,
+        `A ${Math.abs(t.d*100).toFixed(0)} point shift in where leads come from. Sources convert at different
+         rates, so a mix change moves the sale count even when nothing about the selling changed.`,
+        "warn", S1.leads.filter(r => S(r.channel)===t.k));
+    }
+    /* post-webinar effort */
+    const eff = rows => { const pre = sumOf(rows,"pre_webinar_attempt"); const post = sumOf(rows,"post_webinar_attempt");
+      return pre ? post/pre : null };
+    const e1 = eff(S1.leads), e0 = eff(S0.leads);
+    if(e1 !== null && e0 !== null && Math.abs(e1-e0) > 0.08){
+      pushDriver(`Post-webinar calling ${e1>e0?"rose":"fell"} to ${(e1*100).toFixed(0)}% of pre-webinar effort`,
+        `Interest peaks straight after the session. ${e1<e0
+          ? "The push is easing exactly when it should intensify."
+          : "The follow-through is holding better than last time."}`,
+        e1 > e0 ? "good" : "hot",
+        S1.leads.filter(r => num(r.post_webinar_attempt)===0 && (num(r.attended_live)===1||S(r.attended_on))));
+    }
+    /* experience mix */
+    const x1 = mix(S1.leads,"work_ex"), x0 = mix(S0.leads,"work_ex");
+    const xs = Object.keys({...x1,...x0}).map(k => ({
+      k, d:((x1[k]||0)/Math.max(S1.leads.length,1)) - ((x0[k]||0)/Math.max(S0.leads.length,1))
+    })).sort((a,b) => Math.abs(b.d)-Math.abs(a.d));
+    if(xs.length && Math.abs(xs[0].d) > 0.06){
+      pushDriver(`Experience mix moved: ${esc(xs[0].k)} ${xs[0].d>0?"up":"down"} ${Math.abs(xs[0].d*100).toFixed(0)} points`,
+        `FDE sells to experienced engineers. A mix shift changes the ceiling on conversion before any
+         selling happens.`, "warn", S1.leads.filter(r => S(r.work_ex)===xs[0].k));
+    }
+    window._CMDD = drivers.map(d => d.rows);
+    h += drivers.length
+      ? drivers.map((d,i) => `<div class="ins ${d.tone==="good"?"":d.tone}">
+          <div class="inshead">${esc(d.title)}</div>
+          <div class="insbody">${d.body}</div>
+          <div class="insact"><button class="gh evbtn" onclick="drill('Driver','${esc(d.title)}','Leads behind this.',window._CMDD[${i}],'univ')">
+            ${d.rows.length} leads →</button></div></div>`).join("")
+      : `<div class="card"><div class="sub" style="margin:0">Nothing moved enough between these two webinars to call a driver.</div></div>`;
+    h += `<div class="mute" style="font-size:12px;margin-top:8px">These are differences between two cohorts,
+      not proven causes. With two webinars there is no way to separate a real effect from normal variation.</div>`;
+  }
+
+  /* ---- C. priority actions ---- */
+  const acts = [];
+  const rteOpen = S1.rte.filter(r => !cvBought(r));
+  if(rteOpen.length) acts.push({
+    t:`Close the ${rteOpen.length} leads already flagged ready to enrol`,
+    why:`They said yes to the next step and no sale is recorded. History says 43% of IK sales close within a week of the lead — this window is short.`,
+    impact:`${rup2(rteOpen.length*deal*0.35)} to ${rup2(rteOpen.length*deal*0.5)}`,
+    conf:"Medium — the 35-50% band is an assumption until FDE has ~30 sales",
+    effort:"Low", owner:cmdOwner(rteOpen), due:cmdDue(2), rows:rteOpen,
+    accept:"Every lead has a dated next step or a written reason it is dead."});
+  const attNoCall = S1.att.filter(r => num(r.post_webinar_attempt)===0);
+  if(attNoCall.length) acts.push({
+    t:`Call the ${attNoCall.length} who attended and have not been rung since`,
+    why:`Attending is the strongest signal in this data and it decays within days.`,
+    impact:`${rup2(attNoCall.length*0.04*deal)} at the observed attendee conversion rate`,
+    conf:"Medium — rate observed on a small base", effort:"Medium",
+    owner:cmdOwner(attNoCall), due:cmdDue(1), rows:attNoCall,
+    accept:"Every attendee has at least one post-webinar attempt logged."});
+  const noNext = VROWS.filter(r => r.next_step_status==="NOT_DEFINED");
+  if(noNext.length > 10) acts.push({
+    t:`Fix the ${noNext.length} calls that ended with nothing agreed`,
+    why:`No date, no action, no owner. It is a rule rather than a resource — the cheapest thing on this list.`,
+    impact:"Not directly priceable; it removes the largest leak in the call process",
+    conf:"High — counted directly from read calls", effort:"Low",
+    owner:"Sales lead", due:cmdDue(5), rows:[],
+    accept:"Under 20% of calls end without a next step."});
+  const ids = new Set(VROWS.map(r => String(r.hubspot_id)));
+  const unread = S1.leads.filter(r => !ids.has(String(r.hubspot_id)));
+  if(unread.length > S1.leads.length*0.4) acts.push({
+    t:`Run call analysis on the ${unread.length} leads never read`,
+    why:`Every call-quality number describes only ${Math.round((1-unread.length/S1.leads.length)*100)}% of this cohort. The rest is guesswork.`,
+    impact:"Removes the blind spot rather than adding revenue directly",
+    conf:"High", effort:"Medium", owner:"Ops", due:cmdDue(7), rows:unread,
+    accept:"Coverage above 70% for this webinar."});
+  window._CMDA = acts.map(a => a.rows);
+
+  h += `<h3 class="sec">Do these next</h3>`;
+  h += acts.length ? acts.map((a,i) => `<div class="actcard">
+      <div class="acthead"><span class="actn">${i+1}</span>${esc(a.t)}</div>
+      <div class="actwhy">${esc(a.why)}</div>
+      <div class="actgrid">
+        <div><div class="k">Expected</div><div class="v">${a.impact}</div></div>
+        <div><div class="k">Confidence</div><div class="v">${esc(a.conf)}</div></div>
+        <div><div class="k">Effort</div><div class="v">${esc(a.effort)}</div></div>
+        <div><div class="k">Suggested owner</div><div class="v">${esc(a.owner)}</div></div>
+        <div><div class="k">By</div><div class="v">${esc(a.due)}</div></div>
+      </div>
+      <div class="actdone"><b>Done when:</b> ${esc(a.accept)}</div>
+      ${a.rows.length?`<div class="insact"><button class="gh evbtn"
+        onclick="drill('Action','${esc(a.t)}','The leads behind this action.',window._CMDA[${i}],'univ')">
+        open the ${a.rows.length} leads →</button></div>`:""}
+    </div>`).join("")
+    : `<div class="card"><div class="sub" style="margin:0">Nothing urgent. Everything warm has been worked.</div></div>`;
+
+  /* ---- D. risks ---- */
+  const risks = [];
+  if(typeof FRESH !== "undefined" && !FRESH.live)
+    risks.push(["Numbers are a snapshot, not live","BigQuery is not connected, so this reads an export. Two env vars away from live.","go('sources')"]);
+  if(unread.length) risks.push([`${unread.length} leads have no call read`,"Call-quality metrics describe a sample of this cohort.","go('cover')"]);
+  const noSaleDate = UNIV.filter(r => (S(r.lead_status)==="Enrolled"||num(r.existing_student)===1) && !S(r.sale_date).trim());
+  if(noSaleDate.length) risks.push([`${noSaleDate.length} enrolled with no sale date`,"Excluded from every revenue number here because they cannot be dated.","go('conversion')"]);
+  const defects = UNIV.filter(r => num(r.message_defect_count)>0);
+  if(defects.length) risks.push([`${defects.length} leads were told something wrong`,"Wrong price, length or programme name on a recorded call.","go('discipline')"]);
+  if(risks.length){
+    h += `<h3 class="sec">Watch</h3><div class="tw"><table><tbody>
+      ${risks.map(r => `<tr class="click" onclick="${r[2]}"><td style="width:34%"><b>${esc(r[0])}</b></td>
+        <td class="mute">${esc(r[1])}</td><td style="width:70px"><button class="gh">open</button></td></tr>`).join("")}
+    </tbody></table></div>`;
+  }
+
+  /* ---- E. briefing ---- */
+  h += `<h3 class="sec">Briefing</h3>
+   <div class="card"><div style="font-size:13.5px;line-height:1.75">
+     <b>Outcome.</b> ${cur.date} brought ${S1.leads.length} registrations, ${S1.att.length} attended
+     (${rate(S1.att.length,S1.leads.length)}), ${S1.rte.length} reached ready-to-enrol and
+     ${S1.won.length} bought.<br>
+     <b>What moved.</b> ${prev
+       ? `Against ${prev.date}: registrations ${S1.leads.length-S0.leads.length>=0?"+":""}${S1.leads.length-S0.leads.length},
+          attendance ${S1.att.length-S0.att.length>=0?"+":""}${S1.att.length-S0.att.length},
+          sales ${S1.won.length-S0.won.length>=0?"+":""}${S1.won.length-S0.won.length}.`
+       : `No earlier webinar in this cut to compare against.`}<br>
+     <b>Decisions needed.</b> ${acts.length?esc(acts[0].t)+"."
+       :"Nothing blocking."}<br>
+     <b>Risks.</b> ${risks.length?esc(risks[0][0])+"."
+       :"None material."}<br>
+     <b>Not measurable yet.</b> Cost per registration, CAC and ROAS need channel spend.
+     Email influence needs the ALM export. Neither is connected.
+   </div></div></section>`;
+  return h;
+}
+
 function pageCallInput(){
   if(!ALLUNIV.length) return noDB("Call input metrics");
   let h = `<section><h1 class="pg">Call input metrics</h1>
@@ -9368,7 +9735,7 @@ async function loadSeed(){
 
 function render(){
   applyFilters();applyNSFilters();renderNav();
-  const P={lead:pageLead,today:pageToday,knowledge:pageKnowledge,insights:pageInsights,conversion:pageConversion,callinput:pageCallInput,forecast:pageForecast,resources:pageResources,sources:pageSources,master:pageMaster,notfit:pageNotFit,jobs:pageJobs,webinars:pageWebinars,audit:pageAudit,webinar:pageWebinar,
+  const P={lead:pageLead,today:pageToday,command:pageCommand,glossary:pageGlossary,knowledge:pageKnowledge,insights:pageInsights,conversion:pageConversion,callinput:pageCallInput,forecast:pageForecast,resources:pageResources,sources:pageSources,master:pageMaster,notfit:pageNotFit,jobs:pageJobs,webinars:pageWebinars,audit:pageAudit,webinar:pageWebinar,
    campaigns:pageCampaigns,t500:pageTalent500,calling:pageCalling,explore:pageExplore,plan:pagePlan,scen:pageScen,coach:pageCoach,org:pageOrg,pa:pagePA,discipline:pageDisc,
    voice:pageVoice,queue:pageQueue,noshow:pageNoShow,noniql:pageNonIQL,upsell:pageUpsell,
    analyse:pageCallAnalysis,aug6:pageAug6,vtt:pageTranscripts,rec:pageRecordings,
@@ -9390,7 +9757,8 @@ function render(){
   { const gw=$("gfWrap"); if(gw) gw.innerHTML=gfBar()+qjPanel()+askPanel();
     const wp=$("wbPick"); if(wp) wp.innerHTML=wbPicker();
     const nf=$("nfChip"); if(nf) nf.innerHTML=nfChip();
-    const fc=$("freshChip"); if(fc) fc.innerHTML=freshChip(); }
+    const fc=$("freshChip"); if(fc) fc.innerHTML=freshChip();
+    const mb=$("modeBar"); if(mb) mb.innerHTML=modeBar(); }
   if(TAB==="coach"){const el=$("coachIn");if(el&&COACH_Q){el.focus();el.setSelectionRange(el.value.length,el.value.length)}}
   if(TAB==="upload"){
     renderSnapList();

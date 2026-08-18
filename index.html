@@ -4093,6 +4093,148 @@ async function stageFiles(files){
   logMsg("Nothing has been changed yet. Look it over, then press Save.","b");
   render();
 }
+/* ---------- live pull from BigQuery ---------- */
+/* Same staging path as a dropped file: nothing is applied until Save, and the
+   diff is shown first. The service-account key lives on the server; this code
+   only ever sees rows. */
+let BQ = {state:"idle", msg:"", rows:0, at:null, table:"", sql:"", cols:[], unmapped:[]};
+
+function bqNorm(k){ return String(k).toLowerCase().replace(/[^a-z0-9]/g,"") }
+function bqField(row, names){
+  for(const n of names){
+    for(const k of Object.keys(row)){
+      if(bqNorm(k) === n) return row[k];
+    }
+  }
+  return "";
+}
+const BQ_ALIAS = {
+  lead_email:            ["leademail","hubspotid","contactid","leadid"],
+  pa_name_final:         ["panamefinal","paname","owner","advisor"],
+  pod_final:             ["podfinal","pod","team"],
+  lead_status:           ["leadstatus","crmleadstatus","status"],
+  latest_classification: ["latestclassification","classification"],
+  work_ex:               ["workex","experience","experiencebucket","yoe"],
+  Work_Ex_Category:      ["workexcategory","expcategory"],
+  role_domain:           ["roledomain","role","designation"],
+  Category:              ["category","rolecategory"],
+  city:                  ["city","location"],
+  channel:               ["channel","source","utmsource"],
+  UTM_Campaign:          ["utmcampaign","campaign"],
+  webinar_start_date:    ["webinarstartdate","eventstartdatetime","webinardate"],
+  attended_on:           ["attendedon","webinarattendeddate","attendeddate"],
+  attended_live:         ["attendedlive","liveattendance"],
+  total_attempt:         ["totalattempt","attempts","dials"],
+  total_connect:         ["totalconnect","connects"],
+  total_tt:              ["totaltt","talktime","talktimemin"],
+  pre_webinar_attempt:   ["prewebinarattempt"],
+  pre_webinar_connect:   ["prewebinarconnect"],
+  post_webinar_attempt:  ["postwebinarattempt"],
+  post_webinar_connect:  ["postwebinarconnect"],
+  DCD_Flag:              ["dcdflag","dcd"],
+  RTE_Flag:              ["rteflag","rte"],
+  sale_date:             ["saledate"],
+  course:                ["course","coursename","product"],
+  net_revenue:           ["netrevenue","revenue","dealamount"],
+  interview_start_time:  ["interviewstarttime","interviewtiming"],
+  Reached:               ["reached"],
+  Connected:             ["connected"],
+  Lead_created_time:     ["leadcreatedtime","createdate","createdtime"],
+  last_call_attempted_date:["lastcallattempteddate","lastattemptdate"],
+  last_call_connected_date:["lastcallconnecteddate"],
+  existing_student:      ["existingstudent","alumni","alumnistatus"],
+};
+/* Map what we recognise and report the rest, rather than silently dropping
+   columns the way a blind rename would. */
+function bqToLeads(rows){
+  const seen = new Set();
+  const out = rows.map(r => {
+    const o = {};
+    for(const t of Object.keys(BQ_ALIAS)){
+      const v = bqField(r, BQ_ALIAS[t]);
+      if(v !== "" && v !== undefined && v !== null) o[t] = v;
+    }
+    Object.keys(r).forEach(k => seen.add(k));
+    return o;
+  }).filter(o => S(o.lead_email).trim() && S(o.lead_email).trim() !== "nan");
+  const mapped = new Set();
+  Object.keys(BQ_ALIAS).forEach(t => BQ_ALIAS[t].forEach(n => mapped.add(n)));
+  const unmapped = [...seen].filter(k => !mapped.has(bqNorm(k)));
+  return {leads: out, unmapped};
+}
+
+async function bqPull(){
+  BQ = Object.assign({}, BQ, {state:"pulling", msg:"Asking BigQuery…"});
+  render();
+  try{
+    let key = "";
+    try{ key = (localStorage.getItem("cbi:synckey")||"").trim() }catch(e){}
+    const r = await fetch("/api/sync/bq?limit=20000", {headers: key?{"x-sync-key":key}:{}});
+    let j = {}; try{ j = await r.json() }catch(e){}
+    if(!r.ok || !j.ok){
+      BQ = Object.assign({}, BQ, {state:"error", msg:(j.error||("The server answered "+r.status+"."))+
+        (r.status===401?" The sync key is missing or wrong."
+         :r.status===503?" BQ_SA_KEY is not set on the server yet."
+         :r.status===404?" The /api/sync/bq route is not deployed yet."
+         :"")});
+      render(); return;
+    }
+    const m = bqToLeads(j.rows||[]);
+    if(!m.leads.length){
+      BQ = Object.assign({}, BQ, {state:"error",
+        msg:"The query returned "+j.count+" rows but none had a usable lead id. Columns seen: "+(j.columns||[]).slice(0,12).join(", ")});
+      render(); return;
+    }
+    const prev = await lastSnapshot();
+    STAGE = {analysis:null, db:m.leads, files:"BigQuery · "+j.table,
+      at:new Date().toISOString(), diff:snapDiff(prev, leadSnap(m.leads)),
+      wb:wbOf(m.leads), counts:{analysis:0, db:m.leads.length}};
+    BQ = {state:"ready", msg:"", rows:m.leads.length, at:new Date().toISOString(),
+      table:j.table, sql:j.sql, cols:j.columns||[], unmapped:m.unmapped,
+      truncated:j.truncated, totalRows:j.totalRows};
+    render();
+  }catch(e){
+    BQ = Object.assign({}, BQ, {state:"error", msg:"Could not reach the server: "+e.message});
+    render();
+  }
+}
+function bqSetKey(v){ try{ localStorage.setItem("cbi:synckey", String(v).trim()) }catch(e){} }
+
+function bqPanel(){
+  let hasKey = false;
+  try{ hasKey = !!(localStorage.getItem("cbi:synckey")||"").trim() }catch(e){}
+  let body = "";
+  if(BQ.state === "error"){
+    body = '<div class="callout" style="margin:10px 0 0;border-left:3px solid var(--red)">'+
+      '<h4>That did not work</h4><p>'+esc(BQ.msg)+'</p>'+
+      '<p style="margin-top:7px">The route is <span class="mono">/api/sync/bq</span>. It needs '+
+      '<span class="mono">BQ_SA_KEY</span> and <span class="mono">SYNC_KEY</span> set in Vercel — '+
+      'see <span class="mono">.env.example</span>.</p></div>';
+  } else if(BQ.state === "ready"){
+    body = '<div class="callout" style="margin:10px 0 0;border-left:3px solid var(--grn)">'+
+      '<h4>'+BQ.rows.toLocaleString()+' leads pulled — nothing applied yet</h4>'+
+      '<p>From <span class="mono">'+esc(BQ.table)+'</span>'+
+      (BQ.truncated?' · <b>truncated</b>, the table holds '+Number(BQ.totalRows).toLocaleString()+' rows':'')+
+      '. Check the changes below, then press Save.</p>'+
+      (BQ.unmapped && BQ.unmapped.length
+        ? '<p style="margin-top:7px"><b>'+BQ.unmapped.length+' columns were not recognised</b> and are not being read: '+
+          '<span class="mono" style="font-size:11.5px">'+esc(BQ.unmapped.slice(0,14).join(", "))+'</span>. '+
+          'If one of those matters, say which and it can be mapped.</p>' : '')+
+      '</div>';
+  }
+  return '<div class="card" style="margin-top:14px"><h3>Pull live from BigQuery</h3>'+
+    '<div class="sub">Table <span class="mono">ik-marketing-data.India_Leads.FDE_India_live_sheet</span>. '+
+    'No date filter — the whole table, so nothing is silently dropped the way the earlier export was.</div>'+
+    '<div class="ctl" style="margin-top:11px">'+
+    '<button class="pri" onclick="bqPull()"'+(BQ.state==="pulling"?" disabled":"")+'>'+
+      (BQ.state==="pulling"?"Pulling…":"Pull now")+'</button>'+
+    '<input type="password" placeholder="'+(hasKey?"sync key saved":"sync key")+'" '+
+      'onchange="bqSetKey(this.value)" style="padding:7px 11px;border:1px solid var(--s300);'+
+      'border-radius:7px;font-size:13px;min-width:190px">'+
+    (BQ.at?'<span class="mute">last pull '+esc(String(BQ.at).slice(11,19))+'</span>':'')+
+    '</div>'+body+'</div>';
+}
+
 async function lastSnapshot(){
   try{const r=await window.storage.get("cbi:snapshot"); return r&&r.value?JSON.parse(r.value):null}
   catch(e){return null}
@@ -7047,8 +7189,8 @@ const SRC_REGISTRY = [
    owner:"Category", freshness:"—", note:"Poll answers, feedback verbatims, YES-subsheet."},
  ]},
  {grp:"Connected — problem", items:[
-  {name:"BigQuery lead export", state:"ERROR", detail:"1,414 rows · 3 webinars incl. 13 Aug",
-   owner:"Data", freshness:"12 Aug pull", note:"Does not reconcile with the Live DB: only 358 of 531 leads overlap; the query starts 27 Jul 20:07 and misses 147 earlier leads. Needs a re-run without the date filter plus a ruling on which dupe flag counts. Until then the Live DB stays the spine."},
+  {name:"BigQuery live sheet", state:"NOT_CONNECTED", detail:"ik-marketing-data.India_Leads.FDE_India_live_sheet",
+   owner:"Data", freshness:"live on pull", note:"Adapter written and deployed at /api/sync/bq. Pulls the whole table with no date filter — the earlier export was filtered from 27 Jul and silently dropped 147 leads, which is what broke reconciliation. Needs BQ_SA_KEY and SYNC_KEY set in Vercel, then Upload → Pull now."},
   {name:"Google Sheets pull", state:"PARTIAL", detail:"one-tab pull via OAuth",
    owner:"IK ops", freshness:"on demand", note:"Works for the Live DB tab. Serves as the only live-ish connection."},
  ]},
@@ -7086,7 +7228,7 @@ async function adaptLoad(){
   render();
 }
 const ADAPT_MAP = {
-  "HubSpot CRM API":"hubspot", "Google Search Console":"gsc",
+  "BigQuery live sheet":"bq", "HubSpot CRM API":"hubspot", "Google Search Console":"gsc",
   "Google Analytics 4":"ga4", "Zoom webinar API":"zoom",
 };
 function liveState(name, fallback){
@@ -7137,6 +7279,7 @@ function pageSources(){
   h+=`<h3 class="sec">Adapter layer</h3>
    <div class="tw"><table><thead><tr><th>Route</th><th>What it pulls</th><th>State</th><th>Needs</th></tr></thead><tbody>
      ${[["/api/health","which adapters are configured","always on","nothing"],
+        ["/api/sync/bq","the live FDE India sheet, whole table","ready to deploy","BQ_SA_KEY + SYNC_KEY"],
         ["/api/sync/hubspot","contacts, status, owners, sale fields","ready to deploy","HUBSPOT_TOKEN"],
         ["/api/sync/gsc","queries, clicks, CTR, position","ready to deploy","GSC_* + property access"],
         ["/api/sync/zoom","registrants, attendance, polls","ready to deploy","ZOOM_* app"],
@@ -8774,6 +8917,7 @@ function pageUpload(){
    <p class="lede">Nothing is applied until you press Save. Drop a file, look at what it would change, then commit
    or discard. Leave without saving and the last saved version is what comes back.</p>
    ${stagePanel()}
+   ${bqPanel()}
    ${googlePanel()}
    <h3 style="margin-top:20px;font-size:15px;font-weight:800;letter-spacing:-.02em">Or drag files in</h3>
    <p class="lede" style="margin-bottom:12px">Drag in the call file. Drag in the Live DB at the same time and the tool

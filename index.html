@@ -9368,12 +9368,25 @@ async function loadSeed(){
 
 function render(){
   applyFilters();applyNSFilters();renderNav();
-  const P={lead:pageLead,today:pageToday,insights:pageInsights,conversion:pageConversion,callinput:pageCallInput,forecast:pageForecast,resources:pageResources,sources:pageSources,master:pageMaster,notfit:pageNotFit,jobs:pageJobs,webinars:pageWebinars,audit:pageAudit,webinar:pageWebinar,
+  const P={lead:pageLead,today:pageToday,knowledge:pageKnowledge,insights:pageInsights,conversion:pageConversion,callinput:pageCallInput,forecast:pageForecast,resources:pageResources,sources:pageSources,master:pageMaster,notfit:pageNotFit,jobs:pageJobs,webinars:pageWebinars,audit:pageAudit,webinar:pageWebinar,
    campaigns:pageCampaigns,t500:pageTalent500,calling:pageCalling,explore:pageExplore,plan:pagePlan,scen:pageScen,coach:pageCoach,org:pageOrg,pa:pagePA,discipline:pageDisc,
    voice:pageVoice,queue:pageQueue,noshow:pageNoShow,noniql:pageNonIQL,upsell:pageUpsell,
    analyse:pageCallAnalysis,aug6:pageAug6,vtt:pageTranscripts,rec:pageRecordings,
    cover:pageCoverage,trend:pageTrend,upload:pageUpload};
-  $("page").innerHTML=P[TAB]();
+  /* A tab with no page behind it used to throw and leave a blank screen.
+     Say so instead, and keep the rest of the app alive. */
+  try{
+    const fn = P[TAB];
+    $("page").innerHTML = typeof fn === "function" ? fn()
+      : `<section><h1 class="pg">Not built yet</h1>
+         <p class="lede">The <b>${esc(TAB)}</b> tab has no page behind it. Nothing is broken —
+         pick another section from the left.</p></section>`;
+  }catch(err){
+    $("page").innerHTML = `<section><h1 class="pg">This page hit an error</h1>
+      <p class="lede">${esc(err.message)}</p>
+      <p class="lede">Everything else still works — pick another section on the left.</p></section>`;
+    console.error("page render failed:", TAB, err);
+  }
   { const gw=$("gfWrap"); if(gw) gw.innerHTML=gfBar()+qjPanel()+askPanel();
     const wp=$("wbPick"); if(wp) wp.innerHTML=wbPicker();
     const nf=$("nfChip"); if(nf) nf.innerHTML=nfChip();
@@ -9432,6 +9445,11 @@ function render(){
 
   await resLoad();
   await jobsLoad();
+  /* These four hold the qualitative material — scorecard, 6 Aug analysis,
+     transcripts and the profile playbook. Load them in parallel; a failure in
+     one must not take the others down. */
+  await Promise.allSettled([knowLoad(), ca6Load(), vttLoad(), profLoad()]);
+  freshCheck();
   await loadSeed();
   const restored=await restoreSaved();
   if(restored)logMsg("Restored the last saved version.","b");
